@@ -1,11 +1,12 @@
-import resolve from '@rollup/plugin-node-resolve';
-import replace from '@rollup/plugin-replace';
-import commonjs from '@rollup/plugin-commonjs';
-import svelte from 'rollup-plugin-svelte';
-import babel from 'rollup-plugin-babel';
-import { terser } from 'rollup-plugin-terser';
-import config from 'sapper/config/rollup.js';
-import pkg from './package.json';
+import babel from "rollup-plugin-babel";
+import commonjs from "@rollup/plugin-commonjs";
+import config from "sapper/config/rollup.js";
+import json from "@rollup/plugin-json";
+import pkg from "./package.json";
+import replace from "@rollup/plugin-replace";
+import resolve from "@rollup/plugin-node-resolve";
+import svelte from "rollup-plugin-svelte";
+import { terser } from "rollup-plugin-terser";
 
 const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
@@ -74,7 +75,8 @@ export default {
 			resolve({
 				dedupe
 			}),
-			commonjs()
+			commonjs(),
+			json(),
 		],
 		external: Object.keys(pkg.dependencies).concat(
 			require('module').builtinModules || Object.keys(process.binding('natives'))
