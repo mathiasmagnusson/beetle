@@ -1,6 +1,7 @@
 import * as sapper from "@sapper/server";
 import compression from "compression";
-import creds from "./credentials.json";
+import creds from "./creds.json";
+import database from "./database.js";
 import express from "express";
 import session from "express-session";
 import sessionFileStore from "session-file-store";
@@ -21,7 +22,7 @@ app.use(
 		},
 		resave: false,
 		saveUninitialized: false,
-		secret: creds.secret,
+		secret: creds["cookie-secret"],
 		store: new FileStore({
 			path: dev ? ".sessions" : "/tmp/beetle-sessions",
 		}),
