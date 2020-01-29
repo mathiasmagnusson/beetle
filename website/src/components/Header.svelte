@@ -17,20 +17,23 @@
 	header {
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
 		background-color: #303030;
 		color: white;
+		height: 64px;
 	}
 
 	ul {
 		display: flex;
-		justify-content: flex-start;
+		justify-content: left;
 		list-style: none;
 	}
 
-	a {
+	nav a {
 		padding: 5px;
 		text-decoration: none;
 		font-size: 18px;
+		color: white;
 	}
 
 	.active-route {
@@ -40,7 +43,19 @@
 	}
 
 	.account {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		margin-right: 20px;
 
+		padding: 10px;
+		background-color: #fff2;
+		border-radius: 6px;
+	}
+
+	.account a {
+		color: white;
+		text-decoration: none;
 	}
 </style>
 
@@ -49,7 +64,7 @@
 		<ul>
 			{#each routes as route}
 				<li>
-					<a class:active={segment === route.href} href={route.href || "/"}>{route.name}</a>
+					<a href={route.href || "/"}>{route.name}</a>
 					{#if segment === route.href}
 						<div in:receive out:send class="active-route"></div>
 					{/if}
@@ -58,6 +73,6 @@
 		</ul>
 	</nav>
 	<section class="account">
-		<p>Log in</p>
+		<a href="/login">Log in</a>
 	</section>
 </header>

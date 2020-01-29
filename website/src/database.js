@@ -11,7 +11,9 @@ class Database {
 
 				username VARCHAR(20) NOT NULL,
 				email VARCHAR(40) NULL,
-				password VARCHAR(60) NOT NULL
+				password VARCHAR(60) NOT NULL,
+
+				UNIQUE (username)
 			)`,
 			`CREATE TABLE IF NOT EXISTS problem (
 				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,

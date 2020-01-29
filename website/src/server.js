@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import creds from "./creds.json";
 import database from "./database.js";
 import express from "express";
+import cryptoken from "./cryptoken.js";
 
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === "development";
@@ -15,6 +16,10 @@ app.use(
 	express.static("static", { dev }),
 	express.json(),
 	cookieParser(),
+	cryptoken({
+		secret: creds.secret,
+		maxAge: 1000 * 60 * 60 * 8,
+	}),
 	sapper.middleware(),
 );
 
