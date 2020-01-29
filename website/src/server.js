@@ -1,5 +1,6 @@
 import * as sapper from "@sapper/server";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import creds from "./creds.json";
 import database from "./database.js";
 import express from "express";
@@ -13,6 +14,7 @@ app.use(
 	compression({ threshold: 0 }),
 	express.static("static", { dev }),
 	express.json(),
+	cookieParser(),
 	sapper.middleware(),
 );
 

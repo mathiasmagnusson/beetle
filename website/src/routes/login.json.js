@@ -1,19 +1,24 @@
 import * as tokens from "../tokens.js";
 
-console.log(tokens.decrypt(tokens.encrypt({ "hej": 1 })));
-
 export function post(req, res) {
 	const { username, password } = req.body;
 
 	if (!username || !password)
-		return res.status(400).send();
+		return res.status(400).send({ msg: "Missing username/password" });
 
-	if (username != "mathias" || password != "foodelevator")
-		return res.status(401).send();
+	if (username != "mathias" || password != "mathias")
+		return res.status(401).send({ msg: "Invalid username/password" });
 
-	let aid = 1;
+	const token = tokens.encrypt({
+		aid: 1
+	});
 
-
-
-	res.send();
+	res
+		.cookie("token", token, {
+			expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+			httpOnly: true,
+		})
+		.send({
+			msg: "Logged in",
+		});
 }
