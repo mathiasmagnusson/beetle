@@ -21,16 +21,24 @@ class Database {
 				author_id INT NOT NULL,
 
 				testing_method ENUM('run-script', 'compare-output') NOT NULL,
-				test_case_count INT NOT NULL,
+				validation_script TEXT NULL, # null if testing_method is 'run-script'
 
 				time_limit_ms INT NOT NULL,
 				memory_limit_mb INT NOT NULL,
 
 				description TEXT NOT NULL,
 
-				# test cases, validation script...
-
 				FOREIGN KEY (author_id) REFERENCES account(id)
+			)`,
+			`CREATE TABLE IF NOT EXISTS test_case (
+				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+
+				problem_id INT NOT NULL,
+
+				input TEXT NOT NULL,
+				correct_output TEXT NULL, # null if problem's testing_method is 'run-script'
+
+				FOREIGN KEY (problem_id) REFERENCES problem(id)
 			)`,
 			`CREATE TABLE IF NOT EXISTS submission (
 				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -38,7 +46,7 @@ class Database {
 				problem_id INT NOT NULL,
 				account_id INT NOT NULL,
 
-				time INT NOT NULL, # unix timestamp
+				timestamp INT NOT NULL, # unix timestamp, whole seconds
 
 				lang VARCHAR(4) NOT NULL, # file ending, like: c, cc, rs, js, hs, java
 
@@ -55,7 +63,7 @@ class Database {
 				) NOT NULL,
 				max_runtime_ms INT, # null when status is pending or compilation-error
 				max_memory_mb INT, # null when status is pending or compilation-error
-				test_cases_succeeded INT, # null when status is pending or compilation-error
+				test_cases_succeeded INT, # null when status is compilation-error
 
 				FOREIGN KEY (problem_id) REFERENCES problem(id),
 				FOREIGN KEY (account_id) REFERENCES account(id)
