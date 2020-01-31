@@ -1,5 +1,6 @@
-import database from "../database.js";
 import bcrypt from "bcrypt";
+import database, { saltRounds } from "../database.js";
+import emailValidator from "email-validator";
 
 export async function post(req, res) {
 	const {
@@ -11,12 +12,15 @@ export async function post(req, res) {
 	if (!username || !email || !password)
 		return res.status(400).send({ msg: "Missing username/password" });
 
-	const hash = await bcrypt.hash(password, 12);
+	if (!emailValidator.validate(email))
+		return res.status(400).send({ msg: "Malformatted email" });
+
+	const hash = await bcrypt.hash(password, saltRounds);
 
 	let result;
 	try {
 		result = await database.query(
-			"INSERT INTO account (username, email, password) VALUES (?, ?, ?)",
+			"INSERT INTO account (username, email, hash) VALUES (?, ?, ?)",
 			[username, email, hash]
 		);
 	}

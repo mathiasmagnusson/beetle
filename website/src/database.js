@@ -1,77 +1,87 @@
-import mysql from "mysql";
 import creds from "./creds.json";
+import mysql from "mysql";
+
+export const saltRounds = 12;
 
 class Database {
 	constructor() {
 		this.connect();
 
-		[
-			`CREATE TABLE IF NOT EXISTS account (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+		[`CREATE TABLE IF NOT EXISTS account (
+			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-				username VARCHAR(20) NOT NULL,
-				email VARCHAR(40) NULL,
-				password VARCHAR(60) NOT NULL,
+			username VARCHAR(20) NOT NULL,
+			email VARCHAR(40) NULL,
+			hash VARCHAR(60) NOT NULL,
 
-				UNIQUE (username)
-			)`,
-			`CREATE TABLE IF NOT EXISTS problem (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+			UNIQUE (username)
+		)`,
+		`CREATE TABLE IF NOT EXISTS problem (
+			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-				short_name VARCHAR(30) NOT NULL,
-				long_name VARCHAR(40),
-				author_id INT NOT NULL,
+			short_name VARCHAR(30) NOT NULL,
+			long_name VARCHAR(40),
+			author_id INT NOT NULL,
 
-				testing_method ENUM('run-script', 'compare-output') NOT NULL,
-				validation_script TEXT NULL, # null if testing_method is 'run-script'
+			testing_method ENUM('run-script', 'compare-output') NOT NULL,
+			validation_script TEXT NULL, # null if testing_method is 'run-script'
 
-				time_limit_ms INT NOT NULL,
-				memory_limit_mb INT NOT NULL,
+			time_limit_ms INT NOT NULL,
+			memory_limit_mb INT NOT NULL,
 
-				description TEXT NOT NULL,
+			description TEXT NOT NULL,
 
-				FOREIGN KEY (author_id) REFERENCES account(id)
-			)`,
-			`CREATE TABLE IF NOT EXISTS test_case (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+			FOREIGN KEY (author_id) REFERENCES account(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS vote (
+			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-				problem_id INT NOT NULL,
+			problem_id INT NOT NULL,
+			account_id INT NOT NULL,
 
-				input TEXT NOT NULL,
-				correct_output TEXT NULL, # null if problem's testing_method is 'run-script'
+			type ENUM('up', 'down'),
 
-				FOREIGN KEY (problem_id) REFERENCES problem(id)
-			)`,
-			`CREATE TABLE IF NOT EXISTS submission (
-				id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+			FOREIGN KEY (problem_id) REFERENCES problem(id),
+			FOREIGN KEY (account_id) REFERENCES account(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS test_case (
+			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-				problem_id INT NOT NULL,
-				account_id INT NOT NULL,
+			problem_id INT NOT NULL,
 
-				timestamp INT NOT NULL, # unix timestamp, whole seconds
+			input TEXT NOT NULL,
+			correct_output TEXT NULL, # null if problem's testing_method is 'run-script'
 
-				lang VARCHAR(4) NOT NULL, # file ending, like: c, cc, rs, js, hs, java
+			FOREIGN KEY (problem_id) REFERENCES problem(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS submission (
+			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-				source TEXT NOT NULL,
+			problem_id INT NOT NULL,
+			account_id INT NOT NULL,
 
-				status ENUM(
-					'pending',
-					'accepted',
-					'wrong-answer',
-					'runtime-error',
-					'compilation-error',
-					'time-limit-exceeded',
-					'memory-limit-exceeded'
-				) NOT NULL,
-				max_runtime_ms INT, # null when status is pending or compilation-error
-				max_memory_mb INT, # null when status is pending or compilation-error
-				test_cases_succeeded INT, # null when status is compilation-error
+			timestamp INT NOT NULL, # unix timestamp, whole seconds
 
-				FOREIGN KEY (problem_id) REFERENCES problem(id),
-				FOREIGN KEY (account_id) REFERENCES account(id)
-			)`,
+			lang VARCHAR(4) NOT NULL, # file ending, like: c, cc, rs, js, hs, java
 
-		]
+			source TEXT NOT NULL,
+
+			status ENUM(
+				'pending',
+				'accepted',
+				'wrong-answer',
+				'runtime-error',
+				'compilation-error',
+				'time-limit-exceeded',
+				'memory-limit-exceeded'
+			) NOT NULL,
+			max_runtime_ms INT, # null when status is pending or compilation-error
+			max_memory_mb INT, # null when status is pending or compilation-error
+			test_cases_succeeded INT, # null when status is compilation-error
+
+			FOREIGN KEY (problem_id) REFERENCES problem(id),
+			FOREIGN KEY (account_id) REFERENCES account(id)
+		)`,]
 			.forEach(async (query, i) => {
 				try {
 					await this.query(query);

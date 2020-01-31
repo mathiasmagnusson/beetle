@@ -6,26 +6,37 @@ function encrypt(token, ivSize, algorithm, secret) {
 	const iv = crypto.randomBytes(ivSize);
 	const cipher = crypto.createCipheriv(algorithm, secret, iv);
 	const ivStr = iv.toString("hex");
-	return ivStr + cipher.update(secret + ivStr + JSON.stringify(token), "utf8", "hex") + cipher.final("hex");
+	const plaintext = `${Date.now()}:${secret}:${ivStr}:${Buffer.from(JSON.stringify(token)).toString("base64")}`;
+	console.log("Encrypting", plaintext);
+	return ivStr + cipher.update(plaintext, "utf8", "hex") + cipher.final("hex");
 }
 
-function decrypt(token, ivSize, algorithm, secret) {
+function decrypt(token, ivSize, algorithm, secret, maxAge) {
 	try {
 		const ivStr = token.substring(0, ivSize * 2);
 		const iv = Buffer.from(ivStr, "hex");
-		const encypted = token.substring(ivSize * 2);
+		const encyptedToken = token.substring(ivSize * 2);
 
 		const decipher = crypto.createDecipheriv(algorithm, secret, iv);
-
-		const str = decipher.update(encypted, "hex", "utf8")
+		const str = decipher.update(encyptedToken, "hex", "utf8")
 			+ decipher.final("utf8");
 
-		assert.equal(secret, str.substring(0, secret.length));
-		assert.equal(ivStr, str.substring(secret.length, secret.length + ivStr.length));
+		console.log("Decrypted", str);
 
-		return JSON.parse(str.substring(secret.length + ivStr.length));
+		const split = str.split(":");
+		const creationDate = split.shift();
+		const secretCheck = split.shift();
+		const ivCheck = split.shift();
+		const data = split.shift();
+
+		const age = Date.now() - creationDate;
+		assert.equal(secret, secretCheck);
+		assert.equal(ivStr, ivCheck);
+
+		return JSON.parse(Buffer.from(data, "base64").toString());
 	}
 	catch (err) {
+		console.log(err);
 		return null;
 	}
 }
@@ -42,7 +53,7 @@ export default function cryptoken(options) {
 	if (algorithm && typeof algorithm !== "string")
 		throw new TypeError("algorithm must be a string");
 
-	if (maxAge && typeof maxAge !== "number")
+	if (typeof maxAge !== "number")
 		throw new TypeError("maxAge must be a number");
 
 	if (!ivSize) ivSize = 16;
@@ -54,22 +65,10 @@ export default function cryptoken(options) {
 		onHeaders(res, () => {
 			if (!"token" in req || typeof req.token !== "object") return;
 
-			let opts = {
+			res.cookie("token", encrypt(req.token, ivSize, algorithm, secret), {
 				httpOnly: true,
-			};
-
-			if (typeof maxAge === "number") {
-				opts = {
-					...opts,
-					maxAge
-				};
-			}
-
-			res.cookie(
-				"token",
-				encrypt(req.token, ivSize, algorithm, secret),
-				opts
-			);
+				maxAge,
+			});
 		});
 
 		if ("token" in req.cookies) {
@@ -78,7 +77,7 @@ export default function cryptoken(options) {
 			if (typeof token !== "string" || token.length <= ivSize * 2)
 				return next();
 
-			req.token = decrypt(token, ivSize, algorithm, secret);
+			req.token = decrypt(token, ivSize, algorithm, secret, maxAge);
 		}
 
 		next();

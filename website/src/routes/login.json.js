@@ -8,12 +8,12 @@ export async function post(req, res) {
 		return res.status(400).send({ msg: "Missing username/password" });
 
 	const result = await database.query(
-		"SELECT id, password AS hash FROM account WHERE username = ?",
+		"SELECT id, hash FROM account WHERE username = ?",
 		username,
 	);
 
 	if (result.length == 0) {
-		return res.status(401).send({ msg: "Invalid username" });
+		return res.status(406).send({ msg: "Invalid username" });
 	}
 
 	const { id, hash } = result[0];
@@ -21,7 +21,7 @@ export async function post(req, res) {
 	const correctPassword = await bcrypt.compare(password, hash);
 
 	if (!correctPassword)
-		return res.status(401).send({ msg: "Invalid password" });
+		return res.status(406).send({ msg: "Invalid password" });
 
 	req.token = { id };
 
