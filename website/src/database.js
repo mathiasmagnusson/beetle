@@ -11,6 +11,7 @@ class Database {
 			id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
 			username VARCHAR(20) NOT NULL,
+			full_name VARCHAR(40) NULL,
 			email VARCHAR(40) NULL,
 			hash VARCHAR(60) NOT NULL,
 

@@ -5,7 +5,7 @@
 * API:
 	- [x] Register
 	- [x] Login
-	- [ ] Change email
+	- [x] Change email
 	- [x] Change password
 	- [ ] Reset password (?)
 	- [ ] Get account (submissions etc.)
@@ -20,10 +20,11 @@
 * Inlämmningsbara språk:
 	- [ ] c++
 	- [ ] c
-	- [ ] python
+	- [ ] python3
+	- [ ] python2
 	- [ ] rust
 	- [ ] brainfuck
 	- [ ] javascript (node)
-	- [ ] wasm
+	- [ ] wasm (wat)
 	- [ ] java
 
