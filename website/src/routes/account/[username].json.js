@@ -25,5 +25,18 @@ export async function get(req, res) {
 	else
 		authoredProblems = authProbResult;
 
+	const pointsResult = await database.query(
+		`
+		SELECT SUM(points)
+		FROM account, problem, submission
+		WHERE account.id = ?,
+		AND submission.account_id = account.id
+		AND problem.id = submission.problem_id
+		GROUP BY account.id
+		`
+	);
+
+	console.log(pointsResult);
+
 	res.send({ username, fullName, authoredProblems });
 }

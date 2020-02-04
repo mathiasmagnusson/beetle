@@ -24,6 +24,7 @@ class Database {
 			long_name VARCHAR(40),
 			author_id INT NOT NULL,
 
+			points INT NOT NULL,
 			testing_method ENUM('run-script', 'compare-output') NOT NULL,
 			validation_script TEXT NULL, # null if testing_method is 'run-script'
 
@@ -93,6 +94,55 @@ class Database {
 					process.exit(-1);
 				}
 			});
+
+		// TODO: remove before production
+		this.setupTestDatabase();
+	}
+
+	async setupTestDatabase() {
+		const bcrypt = await import("bcrypt");
+
+		const r1 = await this.query(
+			"SELECT COUNT(*) as accounts FROM account"
+		);
+
+		if (r1[0].accounts > 0) return;
+
+		console.log("Creating test database");
+		await Promise.all([
+			this.query(
+				"INSERT INTO account (username, full_name, email, hash) VALUES (?, ?, ?, ?)",
+				["foodelevator", "Mathias Magnusson", "mathias@magnusson.space", await bcrypt.hash("password", saltRounds)]
+			),
+			this.query(
+				"INSERT INTO account (username, full_name, email, hash) VALUES (?, ?, ?, ?)",
+				["robofån", "Robin Karlberg", "root@bumbis.se", await bcrypt.hash("password", saltRounds)]
+			),
+			this.query(
+				`
+				INSERT INTO problem (
+					short_name,
+					long_name,
+					author_id,
+					points,
+					testing_method,
+					time_limit_ms,
+					memory_limit_mb,
+					description
+				)
+				VALUES (
+					'add',
+					'Addition',
+					1,
+					1,
+					'compare-output',
+					1000,
+					1024,
+'\\\\title{Addition}\n\\\\begin{document}\n\n\\\\section{Input}\nThe input contains two integers, $a$ and $b$, separated by a space. $0 \\\\lte a, b \\\\lte {10}^{37}$\n\n\\\\section{Output}\nOutput the sum of $a$ and $b$ on a single line.\n\n\\\\end{document}\n'
+				)
+				`
+			),
+		]);
 	}
 
 	connect() {
