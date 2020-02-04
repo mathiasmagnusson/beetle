@@ -8,7 +8,7 @@
 	- [x] Change email
 	- [x] Change password
 	- [ ] Reset password (?)
-	- [ ] Get account (submissions etc.)
+	- [x] Get account (submissions etc.)
 	- [ ] Get problem
 	- [ ] Create problem
 	- [ ] Submit solution

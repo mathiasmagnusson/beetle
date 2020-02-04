@@ -95,10 +95,11 @@ class Database {
 				}
 			});
 
-		// TODO: remove before production
-		this.setupTestDatabase();
+		if (process.env.NODE_ENV === "development")
+			this.setupTestDatabase();
 	}
 
+	// TODO: remove before production
 	async setupTestDatabase() {
 		const bcrypt = await import("bcrypt");
 
@@ -119,8 +120,7 @@ class Database {
 				["robofån", "Robin Karlberg", "root@bumbis.se", await bcrypt.hash("password", saltRounds)]
 			),
 			this.query(
-				`
-				INSERT INTO problem (
+				`INSERT INTO problem (
 					short_name,
 					long_name,
 					author_id,
@@ -129,8 +129,7 @@ class Database {
 					time_limit_ms,
 					memory_limit_mb,
 					description
-				)
-				VALUES (
+				) VALUES (
 					'add',
 					'Addition',
 					1,
@@ -138,10 +137,90 @@ class Database {
 					'compare-output',
 					1000,
 					1024,
-'\\\\title{Addition}\n\\\\begin{document}\n\n\\\\section{Input}\nThe input contains two integers, $a$ and $b$, separated by a space. $0 \\\\lte a, b \\\\lte {10}^{37}$\n\n\\\\section{Output}\nOutput the sum of $a$ and $b$ on a single line.\n\n\\\\end{document}\n'
-				)
-				`
+'\\\\title{Addition}\n\\\\begin{document}\n\n\\\\section{Input}\nThe input contains two integers, $a$ and $b$, separated by a space. $0 \\\\lte a, b \\\\lte {10}^{38}$\n\n\\\\section{Output}\nOutput the sum of $a$ and $b$ on a single line.\n\n\\\\end{document}\n'
+				)`
 			),
+			this.query(
+				`INSERT INTO test_case (
+					problem_id,
+					input,
+					correct_output
+				) VALUES (
+					1,
+					'1 1\n',
+					'2'
+				)`
+			),
+			this.query(
+				`INSERT INTO test_case (
+					problem_id,
+					input,
+					correct_output
+				) VALUES (
+					1,
+					'170141183460469231731687303715884105727 170141183460469231731687303715884105666\n',
+					'340282366920938463463374607431768211393'
+				)`
+			),
+			this.query(
+				`INSERT INTO submission (
+					problem_id,
+					account_id,
+					timestamp,
+					lang,
+					source,
+					status,
+					max_runtime_ms,
+					max_memory_mb,
+					test_cases_succeeded
+				) VALUES (
+					1,
+					1,
+					?,
+					'py3',
+					'a, b = map(int, input())\n\nprint(a + b)\n',
+					'accepted',
+					27,
+					61,
+					2
+				)`,
+				Math.floor(Date.now() / 1000) - 1000,
+			),
+			this.query(
+				`INSERT INTO submission (
+					problem_id,
+					account_id,
+					timestamp,
+					lang,
+					source,
+					status,
+					max_runtime_ms,
+					max_memory_mb,
+					test_cases_succeeded
+				) VALUES (
+					1,
+					2,
+					?,
+					'py2',
+					'a, b = map(int, raw_input())\n\nprint a + b\n',
+					'accepted',
+					20,
+					50,
+					2
+				)`,
+				Math.floor(Date.now() / 1000),
+			),
+			this.query(
+				`INSERT INTO vote (
+					problem_id,
+					account_id,
+					type
+				) VALUE (
+					1,
+					1,
+					'up'
+				)`,
+			)
 		]);
 	}
 
