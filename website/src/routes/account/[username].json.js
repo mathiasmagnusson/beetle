@@ -5,7 +5,7 @@ export async function get(req, res) {
 
 	const authProbResult = await database.query(
 		`
-		SELECT full_name, short_name, long_name
+		SELECT account.id, full_name, short_name, long_name
 		FROM account
 		LEFT JOIN problem
 		ON account.id = author_id
@@ -17,13 +17,14 @@ export async function get(req, res) {
 	if (authProbResult.length == 0)
 		return res.status(404).send({ msg: "Unknown not find user " + username });
 
-	const fullName = authProbResult[0]["full_name"];
+	const { full_name: fullName, id } = authProbResult[0];
 
 	let authoredProblems;
 	if (!authProbResult[0]["short_name"])
 		authoredProblems = [];
 	else
-		authoredProblems = authProbResult;
+		authoredProblems = authProbResult
+			.map(problem => ({ shortName: problem.short_name, longName: problem.long_name }));
 
 	const pointsResult = await database.query(
 		`
