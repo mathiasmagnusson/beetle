@@ -20,7 +20,9 @@ export async function get(req, res) {
 	);
 
 	if (problemResult.length == 0)
-		return res.status(404).send({ msg: "Could not find problem " + problem });
+		return res.status(404).send({
+			msg: "Could not find problem " + problem
+		});
 
 	const {
 		id,

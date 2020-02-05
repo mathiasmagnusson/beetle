@@ -23,7 +23,10 @@ export async function get(req, res) {
 	);
 
 	const authoredProblems = authProbResult
-		.map(problem => ({ shortName: problem.short_name, longName: problem.long_name }));
+		.map(problem => ({
+			shortName: problem.short_name,
+			longName: problem.long_name
+		}));
 
 	const submissionsResult = await database.query(
 		`SELECT short_name, long_name, timestamp, lang, status

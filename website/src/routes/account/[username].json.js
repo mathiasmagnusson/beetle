@@ -22,7 +22,10 @@ export async function get(req, res) {
 		authoredProblems = [];
 	else
 		authoredProblems = authProbResult
-			.map(problem => ({ shortName: problem.short_name, longName: problem.long_name }));
+			.map(problem => ({
+				shortName: problem.short_name,
+				longName: problem.long_name
+			}));
 
 	const pointsResult = await database.query(
 		`SELECT SUM(points) AS points

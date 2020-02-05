@@ -113,12 +113,42 @@ class Database {
 		console.log("Creating test database");
 		await Promise.all([
 			this.query(
-				"INSERT INTO account (username, full_name, email, hash) VALUES (?, ?, ?, ?)",
-				["foodelevator", "Mathias Magnusson", "mathias@magnusson.space", await bcrypt.hash("password", saltRounds)]
+				`INSERT INTO account (
+					username,
+					full_name,
+					email,
+					hash
+				) VALUES (
+					?,
+					?,
+					?,
+					?
+				)`,
+				[
+					"foodelevator",
+					"Mathias Magnusson",
+					"mathias@magnusson.space",
+					await bcrypt.hash("password", saltRounds),
+				]
 			),
 			this.query(
-				"INSERT INTO account (username, full_name, email, hash) VALUES (?, ?, ?, ?)",
-				["robofån", "Robin Karlberg", "root@bumbis.se", await bcrypt.hash("password", saltRounds)]
+				`INSERT INTO account (
+					username,
+					full_name,
+					email,
+					hash
+				) VALUES (
+					?,
+					?,
+					?,
+					?
+				)`,
+				[
+					"robofån",
+					"Robin Karlberg",
+					"root@bumbis.se",
+					await bcrypt.hash("password", saltRounds),
+				]
 			),
 			this.query(
 				`INSERT INTO problem (

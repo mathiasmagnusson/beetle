@@ -6,8 +6,19 @@ function encrypt(token, ivSize, algorithm, secret) {
 	const iv = crypto.randomBytes(ivSize);
 	const cipher = crypto.createCipheriv(algorithm, secret, iv);
 	const ivStr = iv.toString("hex");
-	const plaintext = `${Date.now()}:${secret}:${ivStr}:${Buffer.from(JSON.stringify(token)).toString("base64")}`;
-	return ivStr + cipher.update(plaintext, "utf8", "hex") + cipher.final("hex");
+	const plaintext =
+		`${
+			Date.now()
+		}:${
+			secret
+		}:${
+			ivStr
+		}:${
+			Buffer.from(JSON.stringify(token)).toString("base64")
+		}`;
+	return ivStr +
+		cipher.update(plaintext, "utf8", "hex") +
+		cipher.final("hex");
 }
 
 function decrypt(token, ivSize, algorithm, secret, maxAge) {
