@@ -33,6 +33,7 @@ class Database {
 
 			description TEXT NOT NULL,
 
+			UNIQUE(short_name),
 			FOREIGN KEY (author_id) REFERENCES account(id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS vote (
@@ -184,7 +185,31 @@ class Database {
 					61,
 					2
 				)`,
-				Math.floor(Date.now() / 1000) - 1000,
+				Math.floor(Date.now() / 1000) - 1000
+			),
+			this.query(
+				`INSERT INTO submission (
+					problem_id,
+					account_id,
+					timestamp,
+					lang,
+					source,
+					status,
+					max_runtime_ms,
+					max_memory_mb,
+					test_cases_succeeded
+				) VALUES (
+					1,
+					2,
+					?,
+					'py2',
+					'a, b = map(int, raw_input())\n\nprint a * b\n',
+					'wrong-answer',
+					5,
+					30,
+					0
+				)`,
+				Math.floor(Date.now() / 1000) - 500
 			),
 			this.query(
 				`INSERT INTO submission (
@@ -208,19 +233,30 @@ class Database {
 					50,
 					2
 				)`,
-				Math.floor(Date.now() / 1000),
+				Math.floor(Date.now() / 1000)
 			),
 			this.query(
 				`INSERT INTO vote (
 					problem_id,
 					account_id,
 					type
-				) VALUE (
+				) VALUES (
 					1,
 					1,
 					'up'
 				)`,
-			)
+			),
+			this.query(
+				`INSERT INTO vote (
+					problem_id,
+					account_id,
+					type
+				) VALUES (
+					1,
+					2,
+					'up'
+				)`,
+			),
 		]);
 	}
 

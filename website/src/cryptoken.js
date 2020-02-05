@@ -7,7 +7,6 @@ function encrypt(token, ivSize, algorithm, secret) {
 	const cipher = crypto.createCipheriv(algorithm, secret, iv);
 	const ivStr = iv.toString("hex");
 	const plaintext = `${Date.now()}:${secret}:${ivStr}:${Buffer.from(JSON.stringify(token)).toString("base64")}`;
-	console.log("Encrypting", plaintext);
 	return ivStr + cipher.update(plaintext, "utf8", "hex") + cipher.final("hex");
 }
 
@@ -20,8 +19,6 @@ function decrypt(token, ivSize, algorithm, secret, maxAge) {
 		const decipher = crypto.createDecipheriv(algorithm, secret, iv);
 		const str = decipher.update(encyptedToken, "hex", "utf8")
 			+ decipher.final("utf8");
-
-		console.log("Decrypted", str);
 
 		const split = str.split(":");
 		const creationDate = split.shift();

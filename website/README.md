@@ -9,7 +9,7 @@
 	- [x] Change password
 	- [ ] Reset password (?)
 	- [x] Get account (submissions etc.)
-	- [ ] Get problem
+	- [x] Get problem
 	- [ ] Create problem
 	- [ ] Submit solution
 	- [ ] Get submission
