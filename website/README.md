@@ -7,16 +7,18 @@
 	- [x] Login
 	- [x] Change email
 	- [x] Change password
-	- [ ] Reset password (?)
 	- [x] Get account (submissions etc.)
 	- [x] Get specific problem
-	- [x] Get problem list
-	- [ ] Create problem
-	- [ ] Submit solution
-	- [ ] Get submission
-	- [ ] Ranklist
 	- [x] Problem submission stats
-	- [ ] Vote on problem
+	- [x] Get problem list
+	- [x] Vote on problem
+  - [x] Get own submissions
+	- [x] Get submission
+  - [x] Set submission public / private
+	- [x] Ranklist
+	- [ ] Submit solution
+	- [ ] Create problem
+	- [ ] Reset password
 
 * Inlämmningsbara språk:
 	- [ ] c++

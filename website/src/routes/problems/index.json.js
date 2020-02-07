@@ -1,43 +1,50 @@
 import database from "../../database.js";
+import depthify from "../../depthify.js";
 
 export async function get(req, res) {
-	let { start, count } = req.body;
+	let { start, count } = req.query;
 
-	if (!start) start = 0;
-	if (!count) count = 20;
+	start = parseInt(start);
+	count = parseInt(count);
 
-	const problemsResult = await database.query(
+	if (isNaN(start)) start = 0;
+	if (isNaN(count)) count = 20;
+
+	const problems = await database.query(
 		`SELECT
-			problem.id,
 			short_name AS shortName,
 			long_name AS longName,
 			points,
-			COALESCE(SUM(status = 'accepted'), 0) AS succeeded,
-			COALESCE(SUM(status != 'accepted' AND status != 'pending'), 0) AS failed
+			COALESCE(upvotes, 0) AS upvotes,
+			COALESCE(downvotes, 0) AS downvotes,
+			COALESCE(succeeded, 0) AS succeeded,
+			COALESCE(failed, 0) AS failed,
+			username AS "author.username",
+			full_name AS "author.fullName"
 		FROM problem
-		LEFT JOIN submission ON problem.id = submission.problem_id
-		GROUP BY problem.id
+		LEFT JOIN (
+			SELECT
+				problem_id,
+				SUM(type = 'up') AS upvotes,
+				SUM(type = 'down') AS downvotes
+			FROM vote
+			GROUP BY problem_id
+		) AS votes
+		ON votes.problem_id = problem.id
+		LEFT JOIN (
+			SELECT
+				problem_id,
+				SUM(status = 'accepted') AS succeeded,
+				SUM(status != 'accepted' AND status != 'pending') AS failed
+			FROM submission
+			GROUP BY problem_id
+		) AS submissions
+		ON submissions.problem_id = problem.id
+		LEFT JOIN account
+		ON problem.author_id = account.id
 		LIMIT ?, ?`,
 		[start, count]
 	);
 
-	const problems = {};
-	for (const problem of problemsResult) {
-		problems[problem.id] = {
-			...problem,
-			upvotes: 0,
-			downvotes: 0,
-		};
-	}
-
-	const votes = await database.query("SELECT problem_id AS pid, type FROM vote");
-
-	for (const vote of votes) {
-		if (vote.type == 'up')
-			problems[vote.pid].upvotes++;
-		if (vote.type == 'down')
-			problems[vote.pid].downvotes++;
-	}
-
-	res.send(Array.from(Object.values(problems)));
+	res.send(depthify(problems));
 }

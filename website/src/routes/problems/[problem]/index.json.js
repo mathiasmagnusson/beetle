@@ -1,4 +1,5 @@
 import database from "../../../database.js";
+import depthify from "../../../depthify.js";
 
 export async function get(req, res) {
 	const { problem } = req.params;
@@ -6,13 +7,13 @@ export async function get(req, res) {
 	const problemResult = await database.query(
 		`SELECT
 			problem.id,
-			long_name,
+			long_name AS longName,
 			points,
-			time_limit_ms,
-			memory_limit_mb,
+			time_limit_ms AS timeLimit,
+			memory_limit_mb AS memoryLimit,
 			description,
-			full_name,
-			username,
+			username AS "author.username",
+			full_name AS "author.fullName",
 			COALESCE(SUM(type = 'up'), 0) AS upvotes,
 			COALESCE(SUM(type = 'down'), 0) AS downvotes
 		FROM problem
@@ -30,18 +31,17 @@ export async function get(req, res) {
 
 	const {
 		id,
-		long_name: longName,
+		longName,
 		points,
-		time_limit_ms: timeLimit,
-		memory_limit_mb: memoryLimit,
+		timeLimit,
+		memoryLimit,
 		description,
-		full_name: authorFullName,
-		username: authorUsername,
+		author,
 		upvotes,
 		downvotes,
-	} = problemResult[0];
+	} = depthify(problemResult[0]);
 
-	const statusDistributionResult = await database.query(
+	const statusDistribution = await database.query(
 		`SELECT status, COUNT(*) AS count
 		FROM problem, submission
 		WHERE problem.id = submission.problem_id
@@ -50,9 +50,7 @@ export async function get(req, res) {
 		id
 	);
 
-	const statusDistribution = statusDistributionResult.map(row => row);
-
-	const averageResouceHoggingResult = await database.query(
+	const averageResouceHogging = await database.query(
 		`SELECT
 			AVG(max_runtime_ms) AS averageRuntime,
 			AVG(max_memory_mb) AS averageMemory
@@ -63,18 +61,13 @@ export async function get(req, res) {
 		id
 	);
 
-	const averageResouceHogging = averageResouceHoggingResult.map(row => row);
-
 	res.send({
 		longName,
 		points,
 		timeLimit,
 		memoryLimit,
 		description,
-		author: {
-			fullName: authorFullName,
-			username: authorUsername,
-		},
+		author,
 		statusDistribution,
 		averageResouceHogging,
 		upvotes,

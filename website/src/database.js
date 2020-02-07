@@ -65,6 +65,8 @@ class Database {
 			problem_id INT NOT NULL,
 			account_id INT NOT NULL,
 
+			public BOOLEAN NOT NULL,
+
 			timestamp INT NOT NULL, # unix timestamp, whole seconds
 
 			lang VARCHAR(4) NOT NULL, # file ending, like: c, cc, rs, js, hs, java
@@ -170,7 +172,28 @@ class Database {
 					'compare-output',
 					1000,
 					1024,
-'\\\\title{Addition}\n\\\\begin{document}\n\n\\\\section{Input}\nThe input contains two integers, $a$ and $b$, separated by a space. $0 \\\\lte a, b \\\\lte {10}^{38}$\n\n\\\\section{Output}\nOutput the sum of $a$ and $b$ on a single line.\n\n\\\\end{document}\n'
+					'\\\\title{Addition}\n\\\\begin{document}\n\n\\\\section{Input}\nThe input contains two integers, $a$ and $b$, separated by a space. $0 \\\\lte a, b \\\\lte {10}^{38}$\n\n\\\\section{Output}\nOutput the sum of $a$ and $b$ on a single line.\n\n\\\\end{document}\n'
+				)`
+			),
+			this.query(
+				`INSERT INTO problem (
+					short_name,
+					long_name,
+					author_id,
+					points,
+					testing_method,
+					time_limit_ms,
+					memory_limit_mb,
+					description
+				) VALUES (
+					'sub',
+					'Subtraction',
+					1,
+					1,
+					'compare-output',
+					1000,
+					1024,
+					'Subtract shit, guess the rest'
 				)`
 			),
 			this.query(
@@ -199,6 +222,7 @@ class Database {
 				`INSERT INTO submission (
 					problem_id,
 					account_id,
+					public,
 					timestamp,
 					lang,
 					source,
@@ -209,6 +233,7 @@ class Database {
 				) VALUES (
 					1,
 					1,
+					true,
 					?,
 					'py3',
 					'a, b = map(int, input())\n\nprint(a + b)\n',
@@ -223,6 +248,7 @@ class Database {
 				`INSERT INTO submission (
 					problem_id,
 					account_id,
+					public,
 					timestamp,
 					lang,
 					source,
@@ -233,6 +259,7 @@ class Database {
 				) VALUES (
 					1,
 					2,
+					false,
 					?,
 					'py2',
 					'a, b = map(int, raw_input())\n\nprint a * b\n',
@@ -247,6 +274,7 @@ class Database {
 				`INSERT INTO submission (
 					problem_id,
 					account_id,
+					public,
 					timestamp,
 					lang,
 					source,
@@ -257,6 +285,7 @@ class Database {
 				) VALUES (
 					1,
 					2,
+					true,
 					?,
 					'py2',
 					'a, b = map(int, raw_input())\n\nprint a + b\n',
@@ -290,6 +319,7 @@ class Database {
 				)`,
 			),
 		]);
+		console.log("Finished creating test database");
 	}
 
 	connect() {
@@ -313,7 +343,7 @@ class Database {
 		this.inner.on("error", err => {
 			console.error("inner.on(\"error\"): ");
 			console.error(err);
-			setTimeout(() => this.console(), 5000);
+			setTimeout(() => this.connect(), 5000);
 		});
 	}
 
