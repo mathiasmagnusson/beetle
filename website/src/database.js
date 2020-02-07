@@ -33,7 +33,7 @@ class Database {
 
 			description TEXT NOT NULL,
 
-			UNIQUE(short_name),
+			UNIQUE (short_name),
 			FOREIGN KEY (author_id) REFERENCES account(id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS vote (
@@ -43,6 +43,8 @@ class Database {
 			account_id INT NOT NULL,
 
 			type ENUM('up', 'down'),
+
+			UNIQUE (problem_id, account_id),
 
 			FOREIGN KEY (problem_id) REFERENCES problem(id),
 			FOREIGN KEY (account_id) REFERENCES account(id)

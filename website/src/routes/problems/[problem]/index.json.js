@@ -1,4 +1,4 @@
-import database from "../../database.js"
+import database from "../../../database.js";
 
 export async function get(req, res) {
 	const { problem } = req.params;
@@ -12,10 +12,14 @@ export async function get(req, res) {
 			memory_limit_mb,
 			description,
 			full_name,
-			username
-		FROM problem, account
-		WHERE author_id = account.id
-		AND short_name = ?`,
+			username,
+			COALESCE(SUM(type = 'up'), 0) AS upvotes,
+			COALESCE(SUM(type = 'down'), 0) AS downvotes
+		FROM problem
+		LEFT JOIN account ON account.id = problem.author_id
+		LEFT JOIN vote ON problem.id = vote.problem_id
+		WHERE short_name = ?
+		GROUP BY problem.id`,
 		problem
 	);
 
@@ -33,6 +37,8 @@ export async function get(req, res) {
 		description,
 		full_name: authorFullName,
 		username: authorUsername,
+		upvotes,
+		downvotes,
 	} = problemResult[0];
 
 	const statusDistributionResult = await database.query(
@@ -71,5 +77,7 @@ export async function get(req, res) {
 		},
 		statusDistribution,
 		averageResouceHogging,
+		upvotes,
+		downvotes,
 	});
 }

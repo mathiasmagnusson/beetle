@@ -9,14 +9,14 @@ export async function post(req, res) {
 		email,
 	} = req.body;
 
+	if (!req.token)
+		return responses.mustLogin();
+
 	if (!password) return responses.missingParam(res, "password");
 	if (!email) return responses.missingParam(res, "email");
 
 	if (!emailValidator.validate(email))
 		return res.status(400).send({ msg: "Malformatted email" });
-
-	if (!req.token)
-		return responses.mustLogin();
 
 	const result = await database.query(
 		"SELECT hash FROM account WHERE id = ?",

@@ -9,12 +9,13 @@
 	- [x] Change password
 	- [ ] Reset password (?)
 	- [x] Get account (submissions etc.)
-	- [x] Get problem
+	- [x] Get specific problem
+	- [x] Get problem list
 	- [ ] Create problem
 	- [ ] Submit solution
 	- [ ] Get submission
 	- [ ] Ranklist
-	- [ ] Problem submission stats
+	- [x] Problem submission stats
 	- [ ] Vote on problem
 
 * Inlämmningsbara språk:
