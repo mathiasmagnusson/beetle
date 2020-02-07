@@ -12,9 +12,9 @@
 	- [x] Problem submission stats
 	- [x] Get problem list
 	- [x] Vote on problem
-  - [x] Get own submissions
+	- [x] Get own submissions
 	- [x] Get submission
-  - [x] Set submission public / private
+	- [x] Set submission public / private
 	- [x] Ranklist
 	- [ ] Submit solution
 	- [ ] Create problem
