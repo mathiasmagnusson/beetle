@@ -1,4 +1,19 @@
 <style>
+	main {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+	}
+	section {
+		width: 80%;
+		max-width: 800px;
+	}
+	.grid-wrapper {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
 </style>
 
 <script>
@@ -23,13 +38,16 @@
 	}
 </script>
 
-<label for="username">Username</label>
-<input id="username" type="text" bind:value={username} />
-<br />
-<label for="password">Password</label>
-<input id="password" type="password" bind:value={password} />
-<br />
-<button on:click={submit}>Log in</button>
-<br />
-<a href="/register">Register</a>
-
+<main>
+	<section>
+		<h1>Log in</h1>
+		<div class="grid-wrapper">
+			<label for="username">Username</label>
+			<input id="username" type="text" bind:value={username} />
+			<label for="password">Password</label>
+			<input id="password" type="password" bind:value={password} />
+			<a href="/register">Register</a>
+			<button on:click={submit}>Log in</button>
+		</div>
+	</section>
+</main>
