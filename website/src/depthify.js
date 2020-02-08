@@ -1,6 +1,7 @@
 export default function depthify(obj) {
 	if (typeof obj !== "object") return obj;
 	if (obj instanceof Array) return obj.map(depthify);
+	if (obj === null) return obj;
 
 	let ret = {};
 	for (const [key, val] of Object.entries(obj)) {

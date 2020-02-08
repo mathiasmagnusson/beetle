@@ -16,9 +16,21 @@
   - [x] Get submission
   - [x] Set submission public / private
   - [x] Ranklist
-  - [ ] Submit solution
-  - [ ] Create problem
+  - [x] Submit solution
+  - [x] Create problem
+  - [ ] Live submission status
   - [ ] Reset password
+
+* Judge:
+  - [ ] Socket
+  - [ ] Receive submission source & problem input & output
+  - [ ] Sandbox
+  - [ ] Run submission
+  - [ ] Compare output
+  - [ ] Run validation script
+  - [ ] Send results back
+  - [ ] Measure time & memory usage
+  - [ ] Bind external libs etc into sandbox
 
 * Inlämmningsbara språk:
   - [ ] c++
