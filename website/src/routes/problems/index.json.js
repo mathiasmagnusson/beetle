@@ -187,5 +187,5 @@ export async function post(req, res) {
 		))
 	);
 
-	res.send({ msg: "Problem created" });
+	res.send({ msg: "Problem created", shortName });
 }

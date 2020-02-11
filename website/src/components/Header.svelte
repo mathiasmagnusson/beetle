@@ -8,8 +8,8 @@
 	let routes = [
 		{ href: undefined, name: "Home" },
 		{ href: "problems", name: "Problems" },
-		{ href: "ranklists", name: "Ranklists" },
-		{ href: "help", name: "Help" },
+		{ href: "ranklist", name: "Ranklist" },
+		{ href: "submissions", name: "Submissions" },
 	];
 </script>
 
@@ -20,7 +20,12 @@
 		align-items: center;
 		background-color: #303030;
 		color: white;
-		height: 64px;
+		height: 68px;
+		padding: 0 20px;
+	}
+
+	nav {
+		font-size: 22px;
 	}
 
 	ul {
@@ -29,16 +34,20 @@
 		list-style: none;
 	}
 
+	nav li {
+		position: relative;
+	}
+
 	nav a {
 		padding: 5px;
 		text-decoration: none;
-		font-size: 18px;
 		color: white;
 	}
 
 	.active-route {
+		position: absolute;
 		width: 100%;
-		height: 3px;
+		height: 4px;
 		background-color: #108010;
 	}
 
@@ -46,7 +55,6 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		margin-right: 20px;
 
 		padding: 10px;
 		background-color: #fff2;
