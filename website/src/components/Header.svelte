@@ -20,12 +20,12 @@
 		align-items: center;
 		background-color: #303030;
 		color: white;
-		height: 68px;
+		height: 60px;
 		padding: 0 20px;
 	}
 
 	nav {
-		font-size: 22px;
+		font-size: 18px;
 	}
 
 	ul {

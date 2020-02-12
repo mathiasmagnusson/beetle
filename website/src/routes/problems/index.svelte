@@ -5,6 +5,7 @@
 		margin-left: 10%;
 		margin-top: 80px;
 		padding: 5px;
+		font-size: 15px;
 	}
 
 	.grid {
@@ -30,8 +31,15 @@
 	}
 
 	.controls {
-		text-align: right;
 		padding: 10px;
+		display: flex;
+		align-items: center;
+		/* width: max-content; */
+	}
+
+	.controls > * {
+		display: inline-block;
+		margin: 5px;
 	}
 </style>
 
@@ -48,6 +56,16 @@
 
 	let start = 0;
 	let count = 10;
+	let problemsShown;
+
+	$: {
+		problemsShown = `${start}-${start + count}`;
+	}
+
+	async function loadProblems() {
+		const res = await fetch(`problems.json?start=${start}&count=${count}`);
+		problems = await res.json();
+	}
 
 	function previousPage() {
 		start = Math.max(0, start - count);
@@ -55,6 +73,14 @@
 
 	function nextPage() {
 		start += count;
+	}
+
+	function smallerPage() {
+		count--;
+	}
+
+	function biggerPage() {
+		count++;
 	}
 </script>
 
@@ -77,8 +103,11 @@
 			<a class:hl={i % 2} href="/account/{problem.author.username}">{problem.author.fullName || problem.author.username}</a>
 		{/each}
 	</div>
-	<section class="controls">
+	<section on:click={loadProblems} class="controls">
 		<button on:click={previousPage}>⬅️</button>
+		<button on:click={smallerPage}>➖</button>
+		<p>{problemsShown}</p>
+		<button on:click={biggerPage}>➕</button>
 		<button on:click={nextPage}>➡️</button>
 	</section>
 </main>

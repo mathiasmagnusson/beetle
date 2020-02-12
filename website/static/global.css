@@ -6,7 +6,7 @@
 
 body {
 	min-height: 100vh;
-	font-family: sans-serif;
+	font-family: 'DejaVu Sans', sans-serif;
 }
 
 #sapper {
