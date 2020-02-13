@@ -10,7 +10,7 @@
 
 	.grid {
 		display: grid;
-		grid-template-columns: repeat(7, auto);
+		grid-template-columns: repeat(2, auto);
 		padding: 5px;
 	}
 
@@ -44,26 +44,28 @@
 
 <script context="module">
 	export async function preload({ params, query }) {
-		const res = await this.fetch("problems.json?count=10");
-		const problems = await res.json();
-		return { problems };
+		const res = await this.fetch("ranklist.json?count=10");
+		const ranklist = await res.json();
+		return { ranklist };
 	}
 </script>
 
 <script>
-	export let problems;
+	export let ranklist;
 
 	let start = 0;
 	let count = 10;
-	let problemsShown;
+	let usersShown;
+
+	$: console.log(ranklist);
 
 	$: {
-		problemsShown = `${start}-${start + count}`;
+		usersShown = `${start}-${start + count}`;
 	}
 
 	async function loadProblems() {
-		const res = await fetch(`problems.json?start=${start}&count=${count}`);
-		problems = await res.json();
+		const res = await fetch(`ranklist.json?start=${start}&count=${count}`);
+		ranklist = await res.json();
 	}
 
 	function previousPage() {
@@ -86,26 +88,16 @@
 <main>
 	<div class="grid">
 		<p class="h">Name</p>
-		<p class="h" title="Points granted for completing problem">Points</p>
-		<p class="h" title="Upvotes">👍</p>
-		<p class="h" title="Downvotes">👎</p>
-		<p class="h" title="Successes">✔️</p>
-		<p class="h" title="Failiures">❌</p>
-		<p class="h">Author</p>
-		{#each problems as problem, i}
-			<a class:hl={i % 2} href="/problems/{problem.shortName}">{problem.longName || problem.shortName}</a>
-			<div class:hl={i % 2}>{problem.points}</div>
-			<div class:hl={i % 2}>{problem.upvotes}</div>
-			<div class:hl={i % 2}>{problem.downvotes}</div>
-			<div class:hl={i % 2}>{problem.succeeded}</div>
-			<div class:hl={i % 2}>{problem.failed}</div>
-			<a class:hl={i % 2} href="/account/{problem.author.username}">{problem.author.fullName || problem.author.username}</a>
+		<p class="h">Points</p>
+		{#each ranklist as user, i}
+			<a class:hl={i % 2} href="/account/{user.username}">{user.fullName || user.username}</a>
+			<div class:hl={i % 2}>{user.points}</div>
 		{/each}
 	</div>
 	<section on:click={loadProblems} class="controls">
 		<button on:click={previousPage}>⬅️</button>
 		<button on:click={smallerPage}>➖</button>
-		<p>{problemsShown}</p>
+		<p>{usersShown}</p>
 		<button on:click={biggerPage}>➕</button>
 		<button on:click={nextPage}>➡️</button>
 	</section>

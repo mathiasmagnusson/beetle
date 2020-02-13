@@ -9,7 +9,6 @@ export async function get(req, res) {
 	const submissions = await database.query(
 		`SELECT
 			submission.id,
-			public,
 			timestamp,
 			lang,
 			status,

@@ -47,7 +47,7 @@
 	.active-route {
 		position: absolute;
 		width: 100%;
-		height: 4px;
+		height: 3px;
 		background-color: #108010;
 	}
 

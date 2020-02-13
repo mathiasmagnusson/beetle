@@ -21,6 +21,25 @@
   - [ ] Live submission status
   - [ ] Reset password
 
+* Frontend:
+  - [ ] Register
+  - [ ] Login
+  - [ ] Change email
+  - [ ] Change password
+  - [ ] Get account (submissions etc.)
+  - [ ] Get specific problem
+  - [ ] Problem submission stats
+  - [x] Get problem list
+  - [ ] Vote on problem
+  - [x] Get own submissions
+  - [ ] Get submission
+  - [ ] Set submission public / private
+  - [x] Ranklist
+  - [ ] Submit solution
+  - [ ] Create problem
+  - [ ] Live submission status
+  - [ ] Reset password
+
 * Judge:
   - [ ] Socket
   - [ ] Receive submission source & problem input & output
