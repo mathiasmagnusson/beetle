@@ -1,45 +1,42 @@
-use std::collections::VecDeque;
-use std::convert::TryFrom;
-use std::io::Error;
+use std::{
+    io,
+    net::{TcpListener, TcpStream},
+};
 
 #[cfg(test)]
 mod tests;
 
-enum Language {
-    C,
-    CC,
-}
+mod submission;
+mod worker_pool;
 
-impl TryFrom<&str> for Language {
-    type Error = Error;
-    fn try_from(s: &str) -> Result<Language, Self::Error> {
-        use Language::*;
-        match s {
-            "c" => Ok(C),
-            "cc" => Ok(CC),
-            _ => Err(Error::from(std::io::ErrorKind::InvalidInput)),
-        }
-    }
-}
+use submission::{Submission, TestCases};
+use worker_pool::WorkerPool;
 
-enum TestCases {
-    CompareOutput(Vec<(Vec<u8>, Vec<u8>)>),
-    ValidationScript {
-        inputs: Vec<Vec<u8>>,
-        script: Vec<u8>,
-    }
-}
+fn main() -> io::Result<()> {
+    let pool = WorkerPool::new(num_cpus::get());
 
-struct Submission {
-    lang: Language,
-    source: Vec<u8>,
-    test_cases: TestCases,
-}
+    let listener = TcpListener::bind("0.0.0.0:2929")?;
 
-struct SubmissionQueue {
-    queue: VecDeque<Submission>,
-}
+    let mut submission = Submission::new(
+        "c",
+        br#"
+            #include<stdio.h>
 
-fn main() {
-    println!("Hello, world!");
+            int main() {
+                long long a, b;
+                scanf("%lld%lld", &a, &b);
+                printf("%lld", a + b);
+                return 0;
+            }
+        "#
+        .to_vec(),
+        TestCases::CompareOutput(vec![
+            (b"1 1\n".to_vec(), b"2\n".to_vec()),
+            (b"5894 24931\n".to_vec(), b"30825\n".to_vec()),
+        ]),
+    )?;
+
+    pool.submit(Box::new(move || submission.judge()))?;
+
+    Ok(())
 }
