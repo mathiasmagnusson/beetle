@@ -1,5 +1,6 @@
+use serde_json::json;
 use std::{
-    io,
+    io::{self, BufRead, BufReader, Write},
     net::{TcpListener, TcpStream},
 };
 
@@ -9,34 +10,41 @@ mod tests;
 mod submission;
 mod worker_pool;
 
-use submission::{Submission, TestCases};
+use submission::Submission;
 use worker_pool::WorkerPool;
 
-fn main() -> io::Result<()> {
-    let pool = WorkerPool::new(num_cpus::get());
+fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
+    let reader = BufReader::new(socket.try_clone().unwrap());
 
-    let listener = TcpListener::bind("0.0.0.0:2929")?;
+    for line in reader.lines().filter_map(|line| line.ok()) {
+        eprintln!("Incoming submission");
 
-    let mut submission = Submission::new(
-        "c",
-        br#"
-            #include<stdio.h>
-
-            int main() {
-                long long a, b;
-                scanf("%lld%lld", &a, &b);
-                printf("%lld", a + b);
-                return 0;
+        let submission: Submission = match serde_json::from_str(&line) {
+            Ok(submission) => submission,
+            Err(err) => {
+                let _ = write!(socket, "{}\n", json!({ "msg": format!("{}", err) }));
+                continue;
             }
-        "#
-        .to_vec(),
-        TestCases::CompareOutput(vec![
-            (b"1 1\n".to_vec(), b"2\n".to_vec()),
-            (b"5894 24931\n".to_vec(), b"30825\n".to_vec()),
-        ]),
-    )?;
+        };
 
-    pool.submit(Box::new(move || submission.judge()))?;
+        let socket = socket.try_clone().unwrap();
+        if let Err(err) = pool.submit(move || {
+            submission.judge(socket);
+        }) {
+            eprintln!("Pool submission error: {:?}", err);
+        };
+    }
+}
+
+fn main() -> io::Result<()> {
+    let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
+
+    let listener = TcpListener::bind("127.0.0.1:2929")?;
+
+    while let Ok((socket, addr)) = listener.accept() {
+        eprintln!("Incoming connection from {}", addr);
+        handle_connection(socket, &pool);
+    }
 
     Ok(())
 }
