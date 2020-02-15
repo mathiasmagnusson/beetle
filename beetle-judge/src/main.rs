@@ -1,3 +1,6 @@
+#![feature(duration_constants)]
+
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{
     io::{self, BufRead, BufReader, Write},
@@ -7,11 +10,28 @@ use std::{
 #[cfg(test)]
 mod tests;
 
+mod sandbox;
 mod submission;
 mod worker_pool;
 
+use sandbox::Sandbox;
 use submission::Submission;
 use worker_pool::WorkerPool;
+
+#[derive(Serialize, Deserialize)]
+pub enum Language {
+    C,
+    CC,
+}
+
+impl Language {
+    fn file_suffix(&self) -> &'static str {
+        match self {
+            Language::C => "c",
+            Language::CC => "cc",
+        }
+    }
+}
 
 fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
     let reader = BufReader::new(socket.try_clone().unwrap());
@@ -27,9 +47,12 @@ fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
             }
         };
 
-        let socket = socket.try_clone().unwrap();
+        let mut socket = socket.try_clone().unwrap();
         if let Err(err) = pool.submit(move || {
-            submission.judge(socket);
+            if let Err(err) = submission.judge(&mut socket) {
+                eprintln!("Judge error: {}", err);
+                let _ = write!(socket, "Judge error");
+            }
         }) {
             eprintln!("Pool submission error: {:?}", err);
         };

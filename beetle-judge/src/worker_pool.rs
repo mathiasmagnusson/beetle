@@ -51,6 +51,7 @@ impl Drop for WorkerPool {
                 thread.join().unwrap();
             }
         }
+        eprintln!("Worker pool shut down");
     }
 }
 
@@ -60,16 +61,15 @@ struct Worker {
 
 impl Worker {
     pub fn new(receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
-        let thread = thread::spawn(move || {
-            while let Ok(message) = receiver.lock().unwrap().recv() {
-                match message {
-                    Message::Job(job) => job(),
-                    Message::Stop => {
-                        eprintln!("Shutting down worker ({:?})", thread::current().id());
-                        break;
-                    }
+        let thread = thread::spawn(move || loop {
+            let message = receiver.lock().unwrap().recv().unwrap_or(Message::Stop);
+            match message {
+                Message::Job(job) => job(),
+                Message::Stop => {
+                    eprintln!("Shutting down worker ({:?})", thread::current().id());
+                    break;
                 }
-            }
+            };
         });
 
         Self {

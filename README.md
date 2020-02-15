@@ -41,10 +41,9 @@
   - [ ] Reset password
 
 * Judge:
-  - [ ] Socket
-  - [ ] Receive submission source & problem input & output
-  - [ ] Sandbox
-  - [ ] Run submission
+  - [x] Socket
+  - [x] Receive submission source & problem input & output
+  - [ ] Run & Sandbox submission
   - [ ] Compare output
   - [ ] Run validation script
   - [ ] Send results back
