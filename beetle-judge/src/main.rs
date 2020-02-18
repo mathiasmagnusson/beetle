@@ -1,36 +1,26 @@
-#![feature(duration_constants)]
-
-use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{
-    io::{self, BufRead, BufReader, Write},
-    net::{TcpListener, TcpStream},
-};
+use std::io::{BufRead, BufReader, Write};
+use std::net::{TcpListener, TcpStream};
+use std::error::Error;
+use std::sync::RwLock;
+
+use lazy_static::lazy_static;
 
 #[cfg(test)]
 mod tests;
 
+mod settings;
 mod sandbox;
 mod submission;
 mod worker_pool;
 
+use settings::Settings;
 use sandbox::Sandbox;
 use submission::Submission;
 use worker_pool::WorkerPool;
 
-#[derive(Serialize, Deserialize)]
-pub enum Language {
-    C,
-    CC,
-}
-
-impl Language {
-    fn file_suffix(&self) -> &'static str {
-        match self {
-            Language::C => "c",
-            Language::CC => "cc",
-        }
-    }
+lazy_static! {
+    static ref SETTINGS: RwLock<Settings> = RwLock::new(Settings::new().unwrap());
 }
 
 fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
@@ -59,7 +49,7 @@ fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
     }
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
 
     let listener = TcpListener::bind("127.0.0.1:2929")?;
