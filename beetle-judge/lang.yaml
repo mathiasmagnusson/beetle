@@ -1,0 +1,9 @@
+languages:
+  cc:
+    name: "C++"
+    file_suffix: "cc"
+    compiler_command:
+      "gcc -o out % -O3"
+    dependencies:
+      - "/usr/bin/gcc"
+      - "/lib64/ld-linux-x86-64.so.2"

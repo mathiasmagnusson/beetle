@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
 use std::error::Error;
 
+use crate::settings::Language;
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TestCases {
