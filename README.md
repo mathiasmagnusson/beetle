@@ -23,7 +23,7 @@
 
 * Frontend:
   - [ ] Register
-  - [ ] Login
+  - [x] Login
   - [ ] Change email
   - [ ] Change password
   - [ ] Get account (submissions etc.)

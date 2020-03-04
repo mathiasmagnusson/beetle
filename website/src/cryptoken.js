@@ -2,46 +2,81 @@ import crypto from "crypto";
 import onHeaders from "on-headers";
 import assert from "assert";
 
-function encrypt(token, ivSize, algorithm, secret) {
-	const iv = crypto.randomBytes(ivSize);
-	const cipher = crypto.createCipheriv(algorithm, secret, iv);
-	const ivStr = iv.toString("hex");
-	const plaintext =
-		`${
-			Date.now()
-		}:${
-			secret
-		}:${
-			ivStr
-		}:${
-			Buffer.from(JSON.stringify(token)).toString("base64")
-		}`;
-	return ivStr +
-		cipher.update(plaintext, "utf8", "hex") +
-		cipher.final("hex");
+// Feistel cipher
+export function encrypt(token, algorithm, keys, randSize) {
+	const rand = crypto.randomBytes(randSize);
+
+	let date = Date.now().toString();
+	let payload = Buffer.from(JSON.stringify(token));
+	if (payload.length % 2)
+		date = "0" + date;
+
+	const data = Buffer.concat([
+		rand,
+		Buffer.from(date),
+		Buffer.from([0]),
+		payload,
+	]);
+
+	let l = data.slice(0, data.length / 2);
+	let r = data.slice(data.length / 2, data.length);
+	for (const key of keys.slice(0, keys.length - 1)) {
+		let nl = r;
+		let f = crypto
+			.createHash(algorithm)
+			.update(Buffer.concat([Buffer.from(key), r]))
+			.digest();
+		let nr = l.map((byte, i) => byte ^ f[i % f.length]);
+		l = nl;
+		r = nr;
+	}
+
+	let f = crypto
+		.createHash(algorithm)
+		.update(Buffer.concat([Buffer.from(keys[keys.length - 1]), r]))
+		.digest();
+	l = l.map((byte, i) => byte ^ f[i % f.length]);
+	r = r;
+
+	let res = Buffer.concat([rand, l, r]).toString("hex");
+	return res;
 }
 
-function decrypt(token, ivSize, algorithm, secret, maxAge) {
+// Feistel cipher
+export function decrypt(token, algorithm, keys, randSize, maxAge) {
 	try {
-		const ivStr = token.substring(0, ivSize * 2);
-		const iv = Buffer.from(ivStr, "hex");
-		const encyptedToken = token.substring(ivSize * 2);
+		let buffer = Buffer.from(token, "hex");
+		let rand = buffer.slice(0, randSize);
+		let rest = buffer.slice(randSize);
+		let l = rest.slice(0, rest.length / 2);
+		let r = rest.slice(rest.length / 2, rest.length);
 
-		const decipher = crypto.createDecipheriv(algorithm, secret, iv);
-		const str = decipher.update(encyptedToken, "hex", "utf8")
-			+ decipher.final("utf8");
+		for (const key of keys.slice(1).reverse()) {
+			let nl = r;
+			let f = crypto
+				.createHash(algorithm)
+				.update(Buffer.concat([Buffer.from(key), r]))
+				.digest();
+			let nr = l.map((byte, i) => byte ^ f[i % f.length]);
+			l = nl;
+			r = nr;
+		}
 
-		const split = str.split(":");
-		const creationDate = split.shift();
-		const secretCheck = split.shift();
-		const ivCheck = split.shift();
-		const data = split.shift();
+		let f = crypto
+			.createHash(algorithm)
+			.update(Buffer.concat([Buffer.from(keys[0]), r]))
+			.digest();
+		l = l.map((byte, i) => byte ^ f[i % f.length]);
+		r = r;
 
-		const age = Date.now() - creationDate;
-		assert.equal(secret, secretCheck);
-		assert.equal(ivStr, ivCheck);
-
-		return JSON.parse(Buffer.from(data, "base64").toString());
+		const data = Buffer.concat([l, r]);
+		const newRand = data.slice(0, randSize);
+		if (!rand.equals(newRand)) throw new Error("Invalid rand");
+		let mid = data.indexOf(0, randSize);
+		let time = data.slice(randSize, mid);
+		assert(Date.now() - time <= maxAge * 1000);
+		let payload = data.slice(mid + 1);
+		return JSON.parse(payload.toString());
 	}
 	catch (err) {
 		console.log(err);
@@ -50,22 +85,25 @@ function decrypt(token, ivSize, algorithm, secret, maxAge) {
 }
 
 export default function cryptoken(options) {
-	let { secret, ivSize, algorithm, maxAge } = options;
+	let { keys, algorithm, randSize, maxAge } = options;
 
-	if (typeof secret !== "string")
-		throw new TypeError("secret must be a string");
+	if (algorithm == null) algorithm = "sha512";
+	if (randSize == null) randSize = 16;
 
-	if (ivSize && typeof ivSize !== "number")
-		throw new TypeError("ivSize must be a number");
+	if (!(keys instanceof Array))
+		throw new TypeError("keys must be an array");
+
+	if (!keys.every(key => typeof key === "string"))
+		throw new TypeError("all keys must be strings");
 
 	if (algorithm && typeof algorithm !== "string")
 		throw new TypeError("algorithm must be a string");
 
+	if (typeof randSize !== "number")
+		throw new TypeError("randSize must be a number");
+
 	if (typeof maxAge !== "number")
 		throw new TypeError("maxAge must be a number");
-
-	if (!ivSize) ivSize = 16;
-	if (!algorithm) algorithm = "aes256";
 
 	return function(req, res, next) {
 		if ("token" in req) return;
@@ -73,7 +111,7 @@ export default function cryptoken(options) {
 		onHeaders(res, () => {
 			if (!"token" in req || typeof req.token !== "object") return;
 
-			res.cookie("token", encrypt(req.token, ivSize, algorithm, secret), {
+			res.cookie("token", encrypt(req.token, algorithm, keys, randSize), {
 				httpOnly: true,
 				maxAge,
 			});
@@ -82,10 +120,10 @@ export default function cryptoken(options) {
 		if ("token" in req.cookies) {
 			let token = req.cookies.token;
 
-			if (typeof token !== "string" || token.length <= ivSize * 2)
+			if (typeof token !== "string" || token.length <= randSize + 1)
 				return next();
 
-			req.token = decrypt(token, ivSize, algorithm, secret, maxAge);
+			req.token = decrypt(token, algorithm, keys, randSize, maxAge);
 		}
 
 		next();

@@ -17,8 +17,10 @@ app.use(
 	express.json(),
 	cookieParser(),
 	cryptoken({
-		secret: creds.secret,
-		maxAge: 1000 * 60 * 60 * 8,
+		algorithm: "sha512",
+		keys: creds.keys,
+		maxAge: 60 * 60,
+		randSize: 16,
 	}),
 	sapper.middleware(),
 );
