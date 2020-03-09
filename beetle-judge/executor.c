@@ -4,18 +4,36 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <dirent.h>
+#include <string.h>
 
-// Binary must have the following stuff on `ls -l`: `-rwsr-xr-x 1 root root`
+// build:
+	// gcc -static -O3 -o executor executor.c
+	// strip executor
+	// sudo chown root:root executor
+	// sudo chmod 4755 executor
+
+#define DIRECTORY 1
+#define NEW_UID 2
+#define PROGRAM_NAME 3
+#define REQ_ARGS 3
 
 int main(int argc, char** argv) {
-	if (argc != 3) {
-		fprintf(stderr, "Syntax: %s <program name> <new uid>\n", argv[0]);
+	if (argc < 4) {
+		fprintf(
+			stderr,
+			"Syntax: %s <directory> <new uid> <program name> <args...>\n",
+			argv[0]
+		);
 		return -1;
 	}
 
 	if (setuid(0)) {
 		fprintf(stderr, "Could not be root\n");
 		return -1;
+	}
+
+	if (chdir(argv[DIRECTORY])) {
+		fprintf(stderr, "Could not change directory to %s\n", argv[1]);
 	}
 
 	if (chroot(".")) {
@@ -28,17 +46,27 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	int uid = atoi(argv[2]);
+	int uid = atoi(argv[NEW_UID]);
 
 	if (setuid(uid)) {
 		fprintf(stderr, "Could not set uid to %d\n", uid);
 		return -1;
 	}
 
-	char* child_argv[2];
-	child_argv[0] = argv[1];
-	child_argv[1] = NULL;
-	int res = execve(argv[1], child_argv, 0);
+	char** child_argv = malloc(
+		sizeof (char*) *
+		(argc - REQ_ARGS + 1)
+	);
+	child_argv[0] = argv[PROGRAM_NAME];
+	int i;
+	for (i = 1; i < argc - REQ_ARGS; i++) {
+		child_argv[i] = malloc(sizeof (char) * (strlen(argv[i + REQ_ARGS]) + 1));
+		strcpy(child_argv[i], argv[i + REQ_ARGS]);
+	}
+	child_argv[i] = NULL;
+
+	int res = execve(argv[PROGRAM_NAME], child_argv, 0);
 
 	fprintf(stderr, "execve returned (failed) errno: %d\n", errno);
+	return -1;
 }

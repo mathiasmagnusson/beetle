@@ -20,62 +20,65 @@ use submission::Submission;
 use worker_pool::WorkerPool;
 
 lazy_static! {
-	static ref SETTINGS: RwLock<Settings> = RwLock::new(Settings::new().unwrap());
+    static ref SETTINGS: RwLock<Settings> = RwLock::new(Settings::new().unwrap());
 }
 
 fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
-	let reader = BufReader::new(socket.try_clone().unwrap());
+    let reader = BufReader::new(socket.try_clone().unwrap());
 
-	for line in reader.lines().filter_map(|line| line.ok()) {
-		eprintln!("Incoming submission");
+    for line in reader.lines().filter_map(|line| line.ok()) {
+        eprintln!("Incoming submission");
 
-		let submission: Submission = match serde_json::from_str(&line) {
-			Ok(submission) => submission,
-			Err(err) => {
-				let _ = write!(socket, "{}\n", json!({ "msg": format!("{}", err) }));
-				continue;
-			}
-		};
+        let submission: Submission = match serde_json::from_str(&line) {
+            Ok(submission) => submission,
+            Err(err) => {
+                let _ = write!(socket, "{}\n", json!({ "msg": format!("{}", err) }));
+                continue;
+            }
+        };
 
-		let mut socket = socket.try_clone().unwrap();
-		if let Err(err) = pool.submit(move || {
-			if let Err(err) = submission.judge(&mut socket) {
-				eprintln!("Judge error: {}", err);
-				let _ = write!(socket, "Judge error");
-			}
-		}) {
-			eprintln!("Pool submission error: {:?}", err);
-		};
-	}
+        let mut socket = socket.try_clone().unwrap();
+        if let Err(err) = pool.submit(move || {
+            if let Err(err) = submission.judge(&mut socket) {
+                eprintln!("Judge error: {}", err);
+                let _ = write!(socket, "Judge error");
+            }
+        }) {
+            eprintln!("Pool submission error: {:?}", err);
+        };
+    }
 }
 
 const BOOMER: () = ();
 
 fn main() -> Result<(), Box<dyn Error>> {
-	let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
+    let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
 
-	let listener = TcpListener::bind("127.0.0.1:2929")?;
+    let listener = TcpListener::bind("127.0.0.1:2929")?;
 
-	let _ = SETTINGS.read();
+    let _ = SETTINGS.read();
 
-	let _s = Sandbox::new(
-		"cc".into(),
-		r#"
-		#include <iostream>
+    let s = Sandbox::new(
+        "c".into(),
+        r#"
+        #include <stdio.h>
+        #include <stdlib.h>
 
-		using namespace std;
+        int main() {
+            printf("Hello, World!");
+        }
+        "#
+        .into(),
+    )?;
 
-		int main() {
-			cout << "Hello, world!" << endl;
-		}
-		"#
-		.into(),
-	)?;
+    eprintln!("{:#?}", s);
 
-	while let Ok((socket, addr)) = listener.accept() {
-		eprintln!("Incoming connection from {}", addr);
-		handle_connection(socket, &pool);
-	}
+    return Ok(BOOMER);
 
-	Ok(BOOMER)
+    while let Ok((socket, addr)) = listener.accept() {
+        eprintln!("Incoming connection from {}", addr);
+        handle_connection(socket, &pool);
+    }
+
+    Ok(BOOMER)
 }
