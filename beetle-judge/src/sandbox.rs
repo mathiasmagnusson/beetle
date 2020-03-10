@@ -50,13 +50,13 @@ impl Sandbox {
                 fs::create_dir_all(dst.parent().unwrap())?;
 
                 fs::copy(src, dst)?;
-            } else {
+            }/* else {
+                eprintln!("not file: {:?}", src);
                 return Err(Box::new(io::Error::new(
                     io::ErrorKind::Other,
                     "all dependencies must be files",
                 )));
-            }
-
+            }*/
         }
 
         // Write source code
