@@ -3,6 +3,7 @@ use std::net::TcpStream;
 use std::error::Error;
 
 use crate::settings::Language;
+use crate::Sandbox;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,15 +19,6 @@ impl TestCases {
             TestCases::ValidationScript { inputs, .. } => inputs.len(),
         }
     }
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Submission {
-    id: u64,
-    lang: Language,
-    source: String,
-    test_cases: TestCases,
 }
 
 #[derive(Serialize)]
@@ -48,11 +40,21 @@ enum Status {
     MemoryLimitExceeded,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Submission {
+    id: u64,
+    lang: String,
+    source: String,
+    test_cases: TestCases,
+}
+
 impl Submission {
     pub fn judge(&self, _socket: &mut TcpStream) -> Result<(), Box<dyn Error>> {
         eprintln!("Judging submission {}", self.id);
 
         // create sandbox
+		let sandbox = Sandbox::new(self.lang, self.source);
 
         // Loop through test cases
 

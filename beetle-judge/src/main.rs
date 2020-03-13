@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .into(),
     )?;
 
-    eprintln!("{:#?}", s);
+
 
     return Ok(BOOMER);
 

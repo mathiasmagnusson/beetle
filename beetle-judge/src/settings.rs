@@ -10,7 +10,7 @@ pub struct Language {
     pub file_suffix: String,
     pub compiler_command: String,
     pub compiler_args: Vec<String>,
-    pub dependencies: Vec<String>,
+	pub dependencies: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

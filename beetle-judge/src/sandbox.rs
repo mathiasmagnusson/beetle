@@ -37,7 +37,7 @@ impl Sandbox {
             }
         };
 
-        // Copy in compiler & libs
+        // Copy in dependencies
         for dependency in lang_ref.dependencies.iter().flat_map(|dep| glob::glob(dep).unwrap()) {
             let src = PathBuf::from(dependency?);
             let dst = if src.has_root() {
@@ -49,14 +49,14 @@ impl Sandbox {
             if src.is_file() {
                 fs::create_dir_all(dst.parent().unwrap())?;
 
-                fs::copy(src, dst)?;
-            }/* else {
-                eprintln!("not file: {:?}", src);
-                return Err(Box::new(io::Error::new(
-                    io::ErrorKind::Other,
-                    "all dependencies must be files",
-                )));
-            }*/
+                let _ = fs::copy(&src, &dst);
+            } else {
+                eprintln!("Skipping dependency '{:?}' since its a folder", src);
+                // return Err(Box::new(io::Error::new(
+                //     io::ErrorKind::Other,
+                //     "all dependencies must be files",
+                // )));
+            }
         }
 
         // Write source code
@@ -67,12 +67,16 @@ impl Sandbox {
         eprintln!("Doing de ebic bombile");
 
         // do the _e 🅱️ i c_ compile
-        let comp_out = Command::new("./executor")
-            .arg(dir.as_os_str())
-            .arg(format!("{}", sr.judge_inst_uid))
-            .arg(&lang_ref.compiler_command)
-            .args(lang_ref.compiler_args.iter().map(|arg| arg.replace("%", &src_file_name)))
-            .output()?;
+        // let comp_out = Command::new("./executor")
+        //     .arg(dir.as_os_str())
+        //     .arg(format!("{}", sr.judge_inst_uid))
+        //     .arg(&lang_ref.compiler_command)
+        //     .args(lang_ref.compiler_args.iter().map(|arg| arg.replace("%", &src_file_name)))
+        //     .output()?;
+		let comp_out = Command::new(&lang_ref.compiler_command)
+			.current_dir(dir.as_os_str())
+			.args(lang_ref.compiler_args.iter().map(|arg| arg.replace("%", &src_file_name)))
+			.output()?;
 
         eprintln!("Stdout: {}", String::from_utf8_lossy(&comp_out.stdout));
         eprintln!("Stderr: {}", String::from_utf8_lossy(&comp_out.stderr));
@@ -86,7 +90,7 @@ impl Sandbox {
 
         Ok(Sandbox { dir, lang })
     }
-    // pub fn run_test_case(...) -> ... { }
+    pub fn run_test_case() -> ... { }
 }
 
 impl Drop for Sandbox {
