@@ -38,12 +38,7 @@ fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
         };
 
         let mut socket = socket.try_clone().unwrap();
-        if let Err(err) = pool.submit(move || {
-            if let Err(err) = submission.judge(&mut socket) {
-                eprintln!("Judge error: {}", err);
-                let _ = write!(socket, "Judge error");
-            }
-        }) {
+        if let Err(err) = pool.submit(move || submission.judge(&mut socket)) {
             eprintln!("Pool submission error: {:?}", err);
         };
     }
@@ -58,22 +53,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let _ = SETTINGS.read();
 
-    let s = Sandbox::new(
-        "c".into(),
-        r#"
-        #include <stdio.h>
-        #include <stdlib.h>
+    let submission: Submission = serde_json::from_str(
+        r##"{
+            "id": 1,
+            "lang": "c",
+            "source": "#include<stdio.h>\nint main(){printf(\"Hello, World!\\n\");}",
+            "testCases": { "compareOutput": [["", "Hello World!"],["", "Hello World"]] },
+            "timeLimit": 1000
+        }"##,
+    )
+    .unwrap();
 
-        int main() {
-            printf("Hello, World!");
-        }
-        "#
-        .into(),
-    )?;
-
-
-
-    return Ok(BOOMER);
+    let mut buf = vec![];
+    submission.judge(&mut buf);
+    println!("{}", String::from_utf8_lossy(&buf));
 
     while let Ok((socket, addr)) = listener.accept() {
         eprintln!("Incoming connection from {}", addr);

@@ -3,7 +3,7 @@ languages:
     name: "C"
     file_suffix: "c"
     compiler_command: "gcc"
-    compiler_args: ["-static", "-O3", "-o", "out", "%"]
+    compiler_args: ["-static", "-O3", "-o", "program", "%"]
     dependencies:
       - "/lib64/ld-linux-x86-64.so.2"
       # - "/usr/bin/gcc"

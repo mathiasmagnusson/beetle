@@ -1,24 +1,13 @@
 use serde::{Deserialize, Serialize};
-use std::net::TcpStream;
-use std::error::Error;
+use std::io::Write;
 
-use crate::settings::Language;
-use crate::Sandbox;
+use crate::{sandbox, Sandbox};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TestCases {
     CompareOutput(Vec<(String, String)>),
     ValidationScript { inputs: Vec<String>, script: String },
-}
-
-impl TestCases {
-    pub fn len(&self) -> usize {
-        match self {
-            TestCases::CompareOutput(v) => v.len(),
-            TestCases::ValidationScript { inputs, .. } => inputs.len(),
-        }
-    }
 }
 
 #[derive(Serialize)]
@@ -29,10 +18,11 @@ struct Response {
     status: Status,
 }
 
-#[derive(Serialize)]
-enum Status {
+#[derive(Serialize, PartialEq)]
+pub enum Status {
     Pending,
     Accepted,
+    JudgeError,
     WrongAnswer,
     RuntimeError,
     CompilationError,
@@ -47,19 +37,110 @@ pub struct Submission {
     lang: String,
     source: String,
     test_cases: TestCases,
+    time_limit: u128,
+    // memory_limit: u64,
 }
 
 impl Submission {
-    pub fn judge(&self, _socket: &mut TcpStream) -> Result<(), Box<dyn Error>> {
+    pub fn judge<T: Write>(&self, writable: &mut T) {
         eprintln!("Judging submission {}", self.id);
 
         // create sandbox
-		let sandbox = Sandbox::new(self.lang, self.source);
+        let sandbox = match Sandbox::new(&self.lang, &self.source) {
+            Ok(s) => s,
+            Err(sandbox::Error::CompilationError(_code, _output)) => {
+                write!(
+                    writable,
+                    "{}\n",
+                    serde_json::ser::to_string(&Response {
+                        id: self.id,
+                        status: Status::CompilationError,
+                        test_cases_suceeded: 0,
+                    })
+                    .unwrap()
+                )
+                .unwrap();
+                return;
+            }
+            Err(_) => {
+                write!(
+                    writable,
+                    "{}\n",
+                    serde_json::ser::to_string(&Response {
+                        id: self.id,
+                        status: Status::JudgeError,
+                        test_cases_suceeded: 0,
+                    })
+                    .unwrap()
+                )
+                .unwrap();
+                return;
+            }
+        };
 
         // Loop through test cases
+        match &self.test_cases {
+            TestCases::CompareOutput(cases) => {
+                for (i, (input, output)) in cases.iter().enumerate() {
+                    match sandbox.run_test_case(input, output, self.time_limit) {
+                        Ok(Status::Accepted) if i == cases.len() - 1 => write!(
+                            writable,
+                            "{}\n",
+                            serde_json::ser::to_string(&Response {
+                                id: self.id,
+                                status: Status::Accepted,
+                                test_cases_suceeded: cases.len(),
+                            })
+                            .unwrap()
+                        )
+                        .unwrap(),
+                        Ok(Status::Accepted) => write!(
+                            writable,
+                            "{}\n",
+                            serde_json::ser::to_string(&Response {
+                                id: self.id,
+                                status: Status::Pending,
+                                test_cases_suceeded: i + 1
+                            })
+                            .unwrap()
+                        )
+                        .unwrap(),
+                        Ok(status) => {
+                            write!(
+                                writable,
+                                "{}\n",
+                                serde_json::ser::to_string(&Response {
+                                    id: self.id,
+                                    status,
+                                    test_cases_suceeded: i
+                                })
+                                .unwrap()
+                            )
+                            .unwrap();
+                            break;
+                        }
+                        Err(_) => {
+                            write!(
+                                writable,
+                                "{}\n",
+                                serde_json::ser::to_string(&Response {
+                                    id: self.id,
+                                    status: Status::JudgeError,
+                                    test_cases_suceeded: 0,
+                                })
+                                .unwrap()
+                            )
+                            .unwrap();
+                            break;
+                        }
+                    };
+                }
+            }
+            TestCases::ValidationScript { .. } => {
+                unimplemented!();
+            }
+        }
 
         eprintln!("Done judging submission {}", self.id);
-
-        Ok(())
     }
 }

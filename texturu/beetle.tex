@@ -7,6 +7,13 @@
 \setcounter{tocdepth}{2}
 \renewcommand*\contentsname{Innehållsförteckning}
 
+\usepackage[
+	pdfborder={0 0 0},
+	colorlinks=true,
+	linkcolor=black,
+	urlcolor=blue
+]{hyperref}
+
 \begin{document}
 
 \maketitle{}
@@ -27,7 +34,7 @@ Lets be very abstract about things here and speak the little English.
 
 Syftet med detta gymnasiearbete är att skapa en webbsida där användaren ska
 kunna öva på programmeringsproblemlösning och därmed få en förståelse för hur
-en säker webbserver skapas samt hur användarinlämnad kod exekveras på ett
+en säker webbserver skapas samt hur opålitlig kod kan exekveras på ett
 (relativt) säkert sätt.
 
 \subsection{Bakgrund}
@@ -35,7 +42,7 @@ en säker webbserver skapas samt hur användarinlämnad kod exekveras på ett
 \subsection{Frågeställningar}
 
 \begin{itemize}
-	\item Hur exekveras användarinlämnad kod på ett säkert sätt?
+	\item Hur exekveras opålitlig kod på ett säkert sätt?
 	\item
 		Hur mäts ett programs körningstid samt minnesallokeringsmängd på ett
 		konsekvent sätt?
@@ -44,8 +51,6 @@ en säker webbserver skapas samt hur användarinlämnad kod exekveras på ett
 		användarupplevelse?
 
 \end{itemize}
-
-\subsubsection{}
 
 % \subsection{Metod}
 
@@ -56,6 +61,11 @@ Mina bara händer och BIG BRAIN.
 \subsection{Avgränsningar}
 
 \section{Genomförande}
+
+Projektets genomförande inleddes med att undersöka hur opålitlig kod, inlämnat
+av användare, kan exekveras utan att servern utsätts för större säkerhetsrisker.
+I början var tanken om att köra programmen i en docker-instans.
+\href{https://www.docker.com}{Docker} är som en Virtuell
 
 \section{Resultat}
 
