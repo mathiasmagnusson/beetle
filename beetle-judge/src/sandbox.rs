@@ -124,6 +124,7 @@ impl Sandbox {
                 let elapsed = start_time.elapsed();
 
                 if elapsed.as_millis() > time_limit {
+                    let _ = child.kill();
                     return Ok(Status::TimeLimitExceeded);
                 }
 

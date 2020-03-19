@@ -53,21 +53,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let _ = SETTINGS.read();
 
-    let submission: Submission = serde_json::from_str(
-        r##"{
-            "id": 1,
-            "lang": "c",
-            "source": "#include<stdio.h>\nint main(){printf(\"Hello, World!\\n\");}",
-            "testCases": { "compareOutput": [["", "Hello World!"],["", "Hello World"]] },
-            "timeLimit": 1000
-        }"##,
-    )
-    .unwrap();
-
-    let mut buf = vec![];
-    submission.judge(&mut buf);
-    println!("{}", String::from_utf8_lossy(&buf));
-
     while let Ok((socket, addr)) = listener.accept() {
         eprintln!("Incoming connection from {}", addr);
         handle_connection(socket, &pool);

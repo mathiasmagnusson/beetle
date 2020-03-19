@@ -8,15 +8,17 @@ export function encrypt(token, algorithm, keys, randSize) {
 
 	let date = Date.now().toString();
 	let payload = Buffer.from(JSON.stringify(token));
-	if (payload.length % 2)
-		date = "0" + date;
 
-	const data = Buffer.concat([
+	let data = Buffer.concat([
 		rand,
 		Buffer.from(date),
 		Buffer.from([0]),
 		payload,
 	]);
+
+	if (data.length % 2) {
+		data = Buffer.concat([data, Buffer.from([0])]);
+	}
 
 	let l = data.slice(0, data.length / 2);
 	let r = data.slice(data.length / 2, data.length);
@@ -69,7 +71,10 @@ export function decrypt(token, algorithm, keys, randSize, maxAge) {
 		l = l.map((byte, i) => byte ^ f[i % f.length]);
 		r = r;
 
-		const data = Buffer.concat([l, r]);
+		let data = Buffer.concat([l, r]);
+		if (data[data.length - 1] == 0) {
+			data = data.slice(0, data.length - 1);
+		}
 		const newRand = data.slice(0, randSize);
 		if (!rand.equals(newRand)) throw new Error("Invalid rand");
 		let mid = data.indexOf(0, randSize);

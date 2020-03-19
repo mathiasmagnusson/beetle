@@ -1,12 +1,17 @@
 <script>
-	import Header from "../components/Header.svelte";
+	import Menu from "../components/Menu.svelte";
 
 	export let segment;
 </script>
 
 <style>
+	div {
+		margin-left: 5rem;
+	}
 </style>
 
-<Header {segment} />
+<Menu {segment} />
 
-<slot></slot>
+<div>
+	<slot></slot>
+</div>
