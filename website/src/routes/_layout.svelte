@@ -7,6 +7,7 @@
 <style>
 	div {
 		margin-left: 5rem;
+		min-height: 100vh;
 	}
 </style>
 

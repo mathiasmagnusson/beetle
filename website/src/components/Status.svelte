@@ -38,8 +38,6 @@
 <script>
 	export let status;
 	export let hl;
-
-	$: console.log(hl);
 </script>
 
 <div

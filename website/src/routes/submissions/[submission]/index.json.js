@@ -5,7 +5,7 @@ import depthify from "../../../depthify.js";
 export async function get(req, res) {
 	const { submission } = req.params;
 
-	const accountId = req.token ? req.token.id : "0";
+	const accountId = req.token ? req.token.id : -1;
 
 	const result = await database.query(
 		`SELECT
@@ -35,7 +35,7 @@ export async function get(req, res) {
 	if (result.length === 0)
 		return res.status(404).send({ msg: "Unknown submission" });
 
-	if (!result[0].public && result[0].accountId != accountId)
+	if (!result[0].public && result[0].accountId !== accountId)
 		return res.status(403).send({
 			msg: "You dont have access to this submission"
 		});

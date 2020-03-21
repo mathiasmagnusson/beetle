@@ -40,7 +40,7 @@
 		filter: grayscale(100%) opacity(0.7);
 		transition: 0.3s ease-in-out;
 	}
-	a:hover {
+	a:hover, a.active {
 		color: #ffffff;
 		filter: grayscale(0%) opacity(1);
 		background-color: #000000;
@@ -77,7 +77,7 @@
 		}
 	}
 
-	@media only screen and (min-width: 600px) {
+	@media only screen and (min-width: 601px) {
 		aside {
 			overflow-x: hidden;
 			width: 5rem;
@@ -100,7 +100,7 @@
 <script>
 	/* import { crossfade } from "svelte/transition"; */
 
-	/* export let segment; */
+	export let segment;
 
 	/* const [send, receive] = crossfade({}); */
 </script>
@@ -108,36 +108,36 @@
 <aside>
 	<ul>
 		<li class="logo">
-			<a href="/">
+			<a href="/" class:active={segment === undefined}>
 				<i style="color: #50b050" class="fas fa-otter"></i>
 				<span>beetle</span>
 			</a>
 		</li>
 		<li class="item">
-			<a href="/problems">
+			<a href="/problems" class:active={segment === "problems"}>
 				<i style="color: #b05050" class="fas fa-brain"></i>
 				<span>Problems</span>
 			</a>
 		</li>
 		<li class="item">
-			<a href="/ranklist">
+			<a href="/ranklist" class:active={segment === "ranklist"}>
 				<i style="color: #5050b0" class="fas fa-sort-amount-up"></i>
 				<span>Ranklist</span>
 			</a>
 		</li>
 		<li class="logo-mobile">
-			<a href="/">
+			<a href="/" class:active={segment === undefined}>
 				<i style="color: #000000" class="fas fa-otter"></i>
 			</a>
 		</li>
 		<li class="item">
-			<a href="/submissions">
+			<a href="/submissions" class:active={segment === "submissions"}>
 				<i style="color: #b0b050" class="far fa-check-square"></i>
 				<span>Submissions</span>
 			</a>
 		</li>
 		<li class="item">
-			<a href="/settings">
+			<a href="/settings" class:active={segment === "settings"}>
 				<i style="color: #b050b0" class="fas fa-cogs"></i>
 				<span>Settings</span>
 			</a>

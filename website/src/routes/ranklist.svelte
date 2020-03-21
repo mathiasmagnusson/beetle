@@ -57,8 +57,6 @@
 	let count = 10;
 	let usersShown;
 
-	$: console.log(ranklist);
-
 	$: {
 		usersShown = `${start}-${start + count}`;
 	}

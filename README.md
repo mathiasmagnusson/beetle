@@ -27,10 +27,10 @@
   - [ ] Change email
   - [ ] Change password
   - [ ] Get account (submissions etc.)
-  - [ ] Get specific problem
+  - [x] Get specific problem
   - [ ] Problem submission stats
   - [x] Get problem list
-  - [ ] Vote on problem
+  - [x] Vote on problem
   - [x] Get own submissions
   - [ ] Get submission
   - [ ] Set submission public / private
@@ -43,16 +43,17 @@
 * Judge:
   - [x] Socket
   - [x] Receive submission source & problem input & output
-  - [ ] Run & Sandbox submission
-  - [ ] Compare output
+  - [x] Run & Sandbox submission
+  - [x] Compare output
   - [ ] Run validation script
-  - [ ] Send results back
-  - [ ] Measure time & memory usage
-  - [ ] Bind external libs etc into sandbox
+  - [x] Send results back
+  - [x] Measure time usage
+  - [ ] Measure memory usage
+  - [x] Bind external libs etc into sandbox
 
 * Inlämmningsbara språk:
   - [ ] c++
-  - [ ] c
+  - [x] c
   - [ ] python3
   - [ ] python2
   - [ ] rust

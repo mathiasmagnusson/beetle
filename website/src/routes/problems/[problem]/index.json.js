@@ -50,16 +50,38 @@ export async function get(req, res) {
 		id
 	);
 
-	const averageResouceHogging = await database.query(
+	let averageResourceUsage = await database.query(
 		`SELECT
-			AVG(max_runtime_ms) AS averageRuntime,
-			AVG(max_memory_mb) AS averageMemory
+			AVG(max_runtime_ms) AS time,
+			AVG(max_memory_mb) AS memory
 		FROM problem, submission
 		WHERE problem.id = submission.problem_id
 		AND status = 'accepted'
 		AND problem.id = ?`,
 		id
 	);
+
+	if (averageResourceUsage.length == 1) {
+		averageResourceUsage = averageResourceUsage[0];
+	} else {
+		averageResourceUsage = null;
+	}
+
+	let userVote;
+	if (req.token) {
+		const vote = await database.query(
+			`SELECT
+				type
+			FROM vote
+			WHERE problem_id = ?
+			AND account_id = ?`,
+			[id, req.token.id]
+		);
+
+		if (vote.length != 0) {
+			userVote = vote[0].type;
+		}
+	}
 
 	res.send({
 		longName,
@@ -69,8 +91,9 @@ export async function get(req, res) {
 		description,
 		author,
 		statusDistribution,
-		averageResouceHogging,
+		averageResourceUsage,
 		upvotes,
 		downvotes,
+		userVote,
 	});
 }

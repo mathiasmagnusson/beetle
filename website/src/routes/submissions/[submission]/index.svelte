@@ -30,7 +30,9 @@
 
 <script context="module">
 	export async function preload({ params, query }) {
-		const res = await this.fetch("/submissions/" + params.submission + ".json");
+		const res = await this.fetch(`/submissions/${params.submission}.json`, {
+			credentials: "include"
+		});
 
 		let submission;
 		let msg;
@@ -47,8 +49,6 @@
 <script>
 	export let submission;
 	export let msg;
-
-	$: console.log(submission);
 </script>
 
 {#if msg}

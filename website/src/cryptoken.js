@@ -79,12 +79,12 @@ export function decrypt(token, algorithm, keys, randSize, maxAge) {
 		if (!rand.equals(newRand)) throw new Error("Invalid rand");
 		let mid = data.indexOf(0, randSize);
 		let time = data.slice(randSize, mid);
-		assert(Date.now() - time <= maxAge * 1000);
+		assert(Date.now() - time <= maxAge);
 		let payload = data.slice(mid + 1);
 		return JSON.parse(payload.toString());
 	}
 	catch (err) {
-		console.log(err);
+		console.error(err);
 		return null;
 	}
 }
@@ -117,7 +117,7 @@ export default function cryptoken(options) {
 			if (!"token" in req || typeof req.token !== "object") return;
 
 			res.cookie("token", encrypt(req.token, algorithm, keys, randSize), {
-				httpOnly: true,
+				httpOnly: false,
 				maxAge,
 			});
 		});
