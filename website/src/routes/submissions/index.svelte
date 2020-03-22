@@ -32,12 +32,17 @@
 </style>
 
 <script context="module">
+	import { warning } from "../../message-store.js";
+
 	export async function preload({ params, query }) {
 		const res = await this.fetch("submissions.json", {
 			credentials: 'include'
 		});
 
-		if (res.status == 401) this.redirect(302, "/login");
+		if (res.status == 401) {
+			warning("You must log in first");
+			this.redirect(302, "/login");
+		}
 
 		const submissions = await res.json();
 		return { submissions };

@@ -22,20 +22,21 @@
   - [ ] Reset password
 
 * Frontend:
+  - [ ] Titles
   - [ ] Register
   - [x] Login
   - [ ] Change email
   - [ ] Change password
   - [ ] Get account (submissions etc.)
   - [x] Get specific problem
-  - [ ] Problem submission stats
+  - [x] Problem submission stats
   - [x] Get problem list
   - [x] Vote on problem
   - [x] Get own submissions
-  - [ ] Get submission
-  - [ ] Set submission public / private
+  - [x] Get submission
+  - [x] Set submission public / private
   - [x] Ranklist
-  - [ ] Submit solution
+  - [x] Submit solution
   - [ ] Create problem
   - [ ] Live submission status
   - [ ] Reset password

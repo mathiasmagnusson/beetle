@@ -16,9 +16,12 @@ struct Response {
     id: u64,
     test_cases_suceeded: usize,
     status: Status,
+    max_time: Option<u128>,
+    max_memory: Option<u128>,
 }
 
 #[derive(Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum Status {
     Pending,
     Accepted,
@@ -27,7 +30,7 @@ pub enum Status {
     RuntimeError,
     CompilationError,
     TimeLimitExceeded,
-    MemoryLimitExceeded,
+    // MemoryLimitExceeded,
 }
 
 #[derive(Deserialize)]
@@ -45,6 +48,8 @@ impl Submission {
     pub fn judge<T: Write>(&self, writable: &mut T) {
         eprintln!("Judging submission {}", self.id);
 
+        println!("time_limit: {}", self.time_limit);
+
         // create sandbox
         let sandbox = match Sandbox::new(&self.lang, &self.source) {
             Ok(s) => s,
@@ -56,6 +61,8 @@ impl Submission {
                         id: self.id,
                         status: Status::CompilationError,
                         test_cases_suceeded: 0,
+                        max_time: None,
+                        max_memory: None,
                     })
                     .unwrap()
                 )
@@ -70,6 +77,8 @@ impl Submission {
                         id: self.id,
                         status: Status::JudgeError,
                         test_cases_suceeded: 0,
+                        max_time: None,
+                        max_memory: None,
                     })
                     .unwrap()
                 )
@@ -78,41 +87,56 @@ impl Submission {
             }
         };
 
+        let mut max_time = 0;
+
         // Loop through test cases
         match &self.test_cases {
             TestCases::CompareOutput(cases) => {
                 for (i, (input, output)) in cases.iter().enumerate() {
                     match sandbox.run_test_case(input, output, self.time_limit) {
-                        Ok(Status::Accepted) if i == cases.len() - 1 => write!(
-                            writable,
-                            "{}\n",
-                            serde_json::ser::to_string(&Response {
-                                id: self.id,
-                                status: Status::Accepted,
-                                test_cases_suceeded: cases.len(),
-                            })
+                        Ok((Status::Accepted, time)) if i == cases.len() - 1 => {
+                            max_time = time.unwrap_or(max_time).max(max_time);
+                            write!(
+                                writable,
+                                "{}\n",
+                                serde_json::ser::to_string(&Response {
+                                    id: self.id,
+                                    status: Status::Accepted,
+                                    test_cases_suceeded: cases.len(),
+                                    max_time: Some(max_time),
+                                    max_memory: Some(69),
+                                })
+                                .unwrap()
+                            )
                             .unwrap()
-                        )
-                        .unwrap(),
-                        Ok(Status::Accepted) => write!(
-                            writable,
-                            "{}\n",
-                            serde_json::ser::to_string(&Response {
-                                id: self.id,
-                                status: Status::Pending,
-                                test_cases_suceeded: i + 1
-                            })
+                        }
+                        Ok((Status::Accepted, time)) => {
+                            max_time = time.unwrap_or(max_time).max(max_time);
+                            write!(
+                                writable,
+                                "{}\n",
+                                serde_json::ser::to_string(&Response {
+                                    id: self.id,
+                                    status: Status::Pending,
+                                    test_cases_suceeded: i + 1,
+                                    max_time: Some(max_time),
+                                    max_memory: Some(69),
+                                })
+                                .unwrap()
+                            )
                             .unwrap()
-                        )
-                        .unwrap(),
-                        Ok(status) => {
+                        }
+                        Ok((status, time)) => {
+                            max_time = time.unwrap_or(max_time).max(max_time);
                             write!(
                                 writable,
                                 "{}\n",
                                 serde_json::ser::to_string(&Response {
                                     id: self.id,
                                     status,
-                                    test_cases_suceeded: i
+                                    test_cases_suceeded: i,
+                                    max_time: Some(max_time),
+                                    max_memory: Some(69),
                                 })
                                 .unwrap()
                             )
@@ -127,6 +151,8 @@ impl Submission {
                                     id: self.id,
                                     status: Status::JudgeError,
                                     test_cases_suceeded: 0,
+                                    max_time: None,
+                                    max_memory: None,
                                 })
                                 .unwrap()
                             )

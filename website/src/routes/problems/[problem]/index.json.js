@@ -46,6 +46,7 @@ export async function get(req, res) {
 		FROM problem, submission
 		WHERE problem.id = submission.problem_id
 		AND problem.id = ?
+		AND status != 'pending'
 		GROUP BY status`,
 		id
 	);

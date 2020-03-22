@@ -86,8 +86,8 @@ impl Sandbox {
             .output()
             .map_err(|_| Error::JudgeError)?;
 
-        eprintln!("Stdout: {}", String::from_utf8_lossy(&comp_out.stdout));
-        eprintln!("Stderr: {}", String::from_utf8_lossy(&comp_out.stderr));
+        // eprintln!("Stdout: {}", String::from_utf8_lossy(&comp_out.stdout));
+        // eprintln!("Stderr: {}", String::from_utf8_lossy(&comp_out.stderr));
 
         if !comp_out.status.success() {
             return Err(Error::CompilationError(
@@ -96,9 +96,17 @@ impl Sandbox {
             ));
         }
 
-        Ok(Sandbox { dir, lang: lang.to_string() })
+        Ok(Sandbox {
+            dir,
+            lang: lang.to_string(),
+        })
     }
-    pub fn run_test_case(&self, input: &str, correct_output: &str, time_limit: u128) -> Result<Status, Error> {
+    pub fn run_test_case(
+        &self,
+        input: &str,
+        correct_output: &str,
+        time_limit: u128,
+    ) -> Result<(Status, Option<u128>), Error> {
         let sr = SETTINGS.read().map_err(|_| Error::JudgeError)?;
 
         let mut child = Command::new("./executor")
@@ -119,13 +127,14 @@ impl Sandbox {
             .write_all(input.as_bytes())
             .map_err(|_| Error::JudgeError)?;
 
+        let mut elapsed;
         let status = loop {
             if let Ok(maybe_status) = child.try_wait() {
-                let elapsed = start_time.elapsed();
+                elapsed = start_time.elapsed().as_millis();
 
-                if elapsed.as_millis() > time_limit {
+                if elapsed > time_limit {
                     let _ = child.kill();
-                    return Ok(Status::TimeLimitExceeded);
+                    return Ok((Status::TimeLimitExceeded, Some(elapsed)));
                 }
 
                 if let Some(status) = maybe_status {
@@ -139,17 +148,22 @@ impl Sandbox {
         };
 
         if !status.success() {
-            return Ok(Status::RuntimeError);
+            return Ok((Status::RuntimeError, Some(elapsed)));
         }
 
-        let bytes: Vec<u8> = child.stdout.unwrap().bytes().filter_map(|b| b.ok()).collect();
+        let bytes: Vec<u8> = child
+            .stdout
+            .unwrap()
+            .bytes()
+            .filter_map(|b| b.ok())
+            .collect();
 
         let output = String::from_utf8_lossy(&bytes);
 
         if output.trim() == correct_output.trim() {
-            Ok(Status::Accepted)
+            Ok((Status::Accepted, Some(elapsed)))
         } else {
-            Ok(Status::WrongAnswer)
+            Ok((Status::WrongAnswer, Some(elapsed)))
         }
     }
 }

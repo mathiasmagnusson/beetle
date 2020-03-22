@@ -37,7 +37,7 @@
 
 <script>
 	export let status;
-	export let hl;
+	export let hl = false;
 </script>
 
 <div

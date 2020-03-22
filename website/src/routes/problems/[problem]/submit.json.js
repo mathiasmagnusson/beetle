@@ -1,6 +1,6 @@
 import database from "../../../database.js";
 import * as responses from "../../../responses.js";
-import judge from "../../../judge.js";
+import * as judge from "../../../judge.js";
 
 export async function post(req, res) {
 	if (!req.token)
@@ -18,7 +18,37 @@ export async function post(req, res) {
 	if (!judge.supportsLang(lang))
 		return res.status(406).send({ msg: "Unsupported language " + lang });
 
-	const submission = await database.query(
+	const problemData = await database.query(
+		`SELECT
+			problem.id AS problemId,
+			testing_method AS testingMethod,
+			validation_script AS validationScript,
+			time_limit_ms AS timeLimit,
+			memory_limit_mb AS memoryLimit,
+			input,
+			correct_output AS correctOutput
+		FROM problem, test_case
+		WHERE short_name = ?
+		AND problem_id = problem.id`,
+		problem
+	);
+
+	if (problemData.length == 0)
+		return res.status(404).send({ msg: "Unknown problem " + problem });
+
+	const {
+		problemId,
+		testingMethod,
+		validationScript,
+		timeLimit,
+		memoryLimit,
+	} = problemData[0];
+
+	const testCases = problemData.map(
+		({ input, correctOutput }) => ({ input, correctOutput })
+	);
+
+	const insertResult = await database.query(
 		`INSERT INTO submission (
 			problem_id,
 			account_id,
@@ -29,8 +59,8 @@ export async function post(req, res) {
 			status,
 			test_cases_succeeded
 		)
-		SELECT
-			id,
+		VALUES (
+			?,
 			?,
 			false,
 			?,
@@ -38,23 +68,46 @@ export async function post(req, res) {
 			?,
 			'pending',
 			0
-		FROM problem
-		WHERE short_name = ?`,
-		[
+		)`, [
+			problemId,
 			req.token.id,
 			Math.floor(Date.now() / 1000),
 			lang,
 			source,
-			problem,
 		]
 	);
 
-	if (submission.affectedRows === 0)
+	if (insertResult.affectedRows === 0)
 		return res.status(404).send({ msg: "Unknown problem " + problem });
 
-	const id = submission.insertId;
+	const id = insertResult.insertId;
 
-	judge.submit(id, lang, source);
+	let submission = testingMethod === "compare-output" ? {
+		id,
+		lang,
+		source,
+		timeLimit,
+		memoryLimit,
+		testCases: {
+			compareOutput: testCases.map(
+				({ input, correctOutput }) => [input, correctOutput]
+			),
+		},
+	} : {
+		id,
+		lang,
+		source,
+		timeLimit,
+		memoryLimit,
+		testCases: {
+			validationScript: {
+				script: validationScript,
+				inputs: testCases.map(({ input }) => input),
+			}
+		}
+	}
+
+	judge.submit(submission);
 
 	res.send({ id });
 }

@@ -46,15 +46,19 @@
 		const res = await this.fetch(`problems/${params.problem}.json`, {
 			credentials: "include"
 		});
-		return {
-			problem: { shortName: params.problem, ...await res.json() }
+		let problem = {
+			shortName: params.problem,
+			...await res.json(),
 		};
+		return { problem };
 	}
 </script>
 
 <script>
 	import ColorButton from "../../../components/ColorButton.svelte";
 	import PieChart from "../../../components/PieChart.svelte";
+	import { error } from "../../../message-store.js";
+	import { goto } from "@sapper/app";
 
 	export let problem;
 
@@ -93,6 +97,8 @@
 		if (res.status === 200) {
 			if (reset) problem.userVote = null;
 			else problem.userVote = type;
+		} else {
+			error(json.msg);
 		}
 
 		if (typeof json.upvotes === "number")
@@ -112,7 +118,10 @@
 	<aside>
 		<section>
 			<div class="button-row">
-				<ColorButton bg="#4090ff" onclick={() => confirm("Knark?")}>
+				<ColorButton
+					bg="#4090ff"
+					onclick={() => goto(`${window.location}/submit`)}
+				>
 					Submit
 					<i class="fas fa-file-import"></i>
 				</ColorButton>

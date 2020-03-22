@@ -1,5 +1,6 @@
 <style>
 	aside {
+		z-index: 1;
 		position: fixed;
 		background-color: #202020;
 		left: 0;
@@ -15,7 +16,7 @@
 	.logo {
 		width: 100%;
 		font-weight: bold;
-		margin-bottom: 1rem;
+		margin-bottom: 16px;
 		letter-spacing: 0.1ch;
 		background-color: #101010;
 	}
@@ -23,7 +24,7 @@
 		background-color: #181818;
 	}
 	.logo span {
-		font-size: 1.5rem;
+		font-size: 24px;
 	}
 	.item, .logo-mobile {
 		width: 100%;
@@ -34,7 +35,7 @@
 	a {
 		display: flex;
 		align-items: center;
-		height: 5rem;
+		height: 80px;
 		color: #d0d0d0;
 		text-decoration: none;
 		filter: grayscale(100%) opacity(0.7);
@@ -50,14 +51,14 @@
 	}
 	i {
 		font-size: 2em;
-		margin: 0 1.5rem;
+		margin: 0 24px;
 	}
 
 	@media only screen and (max-width: 600px) {
 		aside {
 			bottom: 0;
 			width: 100vw;
-			height: 5rem;
+			height: 80px;
 		}
 		ul {
 			flex-direction: row;
@@ -80,12 +81,12 @@
 	@media only screen and (min-width: 601px) {
 		aside {
 			overflow-x: hidden;
-			width: 5rem;
+			width: 80px;
 			height: 100vh;
 			top: 0;
 		}
 		aside:hover {
-			width: 16rem;
+			width: 256px;
 		}
 		i {
 			min-width: 2em;
@@ -115,7 +116,7 @@
 		</li>
 		<li class="item">
 			<a href="/problems" class:active={segment === "problems"}>
-				<i style="color: #b05050" class="fas fa-brain"></i>
+				<i style="color: #b05050" class="fas fa-square-root-alt"></i>
 				<span>Problems</span>
 			</a>
 		</li>

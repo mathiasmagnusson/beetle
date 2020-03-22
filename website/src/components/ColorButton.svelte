@@ -28,6 +28,9 @@
 	export let onclick = () => {};
 </script>
 
-<a style="--bg: {bg}" on:click={onclick}>
+<a
+	style="--bg: {bg}"
+	on:click={onclick}
+>
 	<slot></slot>
 </a>
