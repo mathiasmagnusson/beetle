@@ -1,4 +1,4 @@
-import database from "../../database.js"
+import database from "../../../database.js"
 
 export async function get(req, res) {
 	const { username } = req.params;
@@ -30,9 +30,14 @@ export async function get(req, res) {
 		id: undefined,
 	}));
 
-	const pointsResult = await database.query(
-		`SELECT SUM(points) AS points
-		FROM account, problem, submission
+	// Things that care about every submission
+	const runtimeResult = await database.query(
+		`SELECT
+			AVG(max_runtime_ms) AS averageRuntime
+		FROM
+			account,
+			problem,
+			submission
 		WHERE account.id = ?
 		AND submission.account_id = account.id
 		AND problem.id = submission.problem_id
@@ -42,7 +47,30 @@ export async function get(req, res) {
 		id
 	);
 
-	const points = pointsResult.length == 1 ? pointsResult[0].points : 0;
+	const averageRuntime = runtimeResult.length === 1 ?
+		runtimeResult[0].averageRuntime :
+		"?";
 
-	res.send({ username, fullName, authoredProblems, points });
+	// Things that only want one submission per problem
+	const pointsResult = await database.query(
+		`SELECT
+			COALESCE(SUM(points), 0) AS points
+		FROM problem
+		WHERE id IN (
+			SELECT
+				problem_id
+			FROM
+				account,
+				submission
+			WHERE account.id = ?
+			AND account_id = account.id
+			AND author_id != account.id
+			AND status = 'accepted'
+		)`,
+		id
+	);
+
+	const points = pointsResult[0].points;
+
+	res.send({ username, fullName, authoredProblems, averageRuntime, points });
 }

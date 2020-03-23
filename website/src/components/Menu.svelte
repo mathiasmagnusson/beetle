@@ -99,11 +99,9 @@
 </style>
 
 <script>
-	/* import { crossfade } from "svelte/transition"; */
-
 	export let segment;
 
-	/* const [send, receive] = crossfade({}); */
+	const isLoggedIn = true;
 </script>
 
 <aside>
@@ -137,11 +135,20 @@
 				<span>Submissions</span>
 			</a>
 		</li>
-		<li class="item">
-			<a href="/settings" class:active={segment === "settings"}>
-				<i style="color: #b050b0" class="fas fa-cogs"></i>
-				<span>Settings</span>
-			</a>
-		</li>
+		{#if isLoggedIn}
+			<li class="item">
+				<a href="/account" class:active={segment === "account"}>
+					<i style="color: #50b0b0" class="far fa-user-circle"></i>
+					<span>Account</span>
+				</a>
+			</li>
+		{:else}
+			<li class="item">
+				<a href="/login" class:active={segment === "login"}>
+					<i style="color: #50b0b0" class="fas fa-sign-in-alt"></i>
+					<span>Log in</span>
+				</a>
+			</li>
+		{/if}
 	</ul>
 </aside>

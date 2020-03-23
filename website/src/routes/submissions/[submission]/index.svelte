@@ -39,6 +39,8 @@
 	pre {
 		padding: 10px;
 		border-radius: 5px;
+		-moz-tab-size: 4;
+		tab-size: 4;
 	}
 	.info {
 		display: flex;
@@ -108,40 +110,34 @@
 			credentials: "include"
 		});
 
+		if (res.status === 200) {
+			const submission = await res.json();
+			return { submission };
+		}
+
 		let json = await res.json();
-
-		let submission;
-		let msg;
-
-		if (res.status == 200)
-			submission = json;
-		else
-			msg = json.msg;
-
-		return { submission, msg };
+		this.error(res.status, json.msg);
 	}
 </script>
 
 <script>
 	import Status from "../../../components/Status.svelte";
-	import { message, error } from "../../../message-store.js";
+	import { message, error } from "../../../util";
 
 	import { onMount } from "svelte";
 
 	export let submission;
-	export let msg;
 
-	let problemName = submission ? submission.problem.longName ||
-		submission.problem.shortName : null;
-	let submitterName = submission ? submission.submitter.fullName ||
-		submission.submitter.username : null;
+	let problemName = submission.problem.longName ||
+		submission.problem.shortName;
+	let submitterName = submission.submitter.fullName ||
+		submission.submitter.username;
 
 	let pre;
 	let submissionTime;
 	let isPublic = submission.public;
 
 	async function publicChange() {
-		console.log(!!isPublic);
 		const res = await fetch(`${window.location}/set-public.json`, {
 			method: "post",
 			headers: {
@@ -185,62 +181,62 @@
 </script>
 
 <div class="wrapper">
-	{#if msg}
-		<section class="msg">
-			<h1>{msg}</h1>
-		</section>
-	{:else if submission}
-		<main>
-			<header>
-				<h1><a href="/problems/{submission.problem.shortName}">
-					{problemName}
-				</a></h1>
-				<span>
-					- by
-					<a href="/account/{submission.submitter.username}">
-						{submitterName}
-					</a>
-				</span>
-				<section class="public">
-					<label for="public">Public</label>
-					<input
-						id="public"
-						type="checkbox"
-						bind:checked={isPublic}
-						on:change={publicChange}
-					/>
-				</section>
-			</header>
-			<section class="info">
-				<div>
-					<p><strong>Language:</strong> {submission.lang}</p>
-					<p><strong>Timestamp:</strong> {submissionTime}</p>
-				</div>
-				{#if typeof submission.maxRuntime === "number"}
-				<div class="right">
-					<p><strong>Run time:</strong> {submission.maxRuntime}ms</p>
-					<p><strong>Run memory:</strong> {submission.maxMemory}MB</p>
-				</div>
+	<main>
+		<header>
+			<h1><a href="/problems/{submission.problem.shortName}">
+				{problemName}
+			</a></h1>
+			<span>
+				- by
+				<a href="/account/{submission.submitter.username}">
+					{submitterName}
+				</a>
+			</span>
+			<section class="public">
+				<label for="public">Public</label>
+				{#if submission.requesterIsOwner}
+				<input
+					id="public"
+					type="checkbox"
+					bind:checked={isPublic}
+					on:change={publicChange}
+				/>
 				{/if}
 			</section>
-			<section class="status">
-				<section class="test-cases">
-					{#each Array(submission.testCases.total).fill() as _, i}
-						<div class="checkbox">
-							{#if i < submission.testCases.succeeded}
-								<div class="check a"></div>
-								<div class="check b"></div>
-							{:else if i == submission.testCases.succeeded &&
-								submission.status !== "pending"}
-								<div class="cross a"></div>
-								<div class="cross b"></div>
-							{/if}
-						</div>
-					{/each}
-				</section>
-				<Status status={submission.status} />
+		</header>
+		<section class="info">
+			<div>
+				<p><strong>Language:</strong> {submission.lang}</p>
+				<p><strong>Timestamp:</strong> {submissionTime}</p>
+			</div>
+			{#if typeof submission.maxRuntime === "number"}
+			<div class="right">
+				<p><strong>Run time:</strong> {submission.maxRuntime}ms</p>
+				<p><strong>Run memory:</strong> {submission.maxMemory}MB</p>
+			</div>
+			{/if}
+		</section>
+		<section class="status">
+			{#if submission.status !== "compilation-error"
+				&& submission.status !== "judge-error"}
+			<section class="test-cases">
+				{#each Array(submission.testCases.total).fill() as _, i}
+					<div class="checkbox">
+						{#if i < submission.testCases.succeeded}
+							<div class="check a"></div>
+							<div class="check b"></div>
+						{:else if i == submission.testCases.succeeded &&
+							submission.status !== "pending" &&
+							submission.status !== "accepted"}
+							<div class="cross a"></div>
+							<div class="cross b"></div>
+						{/if}
+					</div>
+				{/each}
 			</section>
-			<pre bind:this={pre}><code>{submission.source}</code></pre>
-		</main>
-	{/if}
+			{/if}
+			<Status status={submission.status} />
+		</section>
+		<pre bind:this={pre}><code>{submission.source}</code></pre>
+	</main>
 </div>

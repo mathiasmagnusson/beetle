@@ -9,9 +9,6 @@
 	main {
 		grid-area: main;
 		padding: 20px;
-		background-color: white;
-		border-radius: 5px;
-		box-shadow: 0 0 10px -6px #0008;
 	}
 	main, section {
 		background-color: white;
@@ -43,35 +40,32 @@
 
 <script context="module">
 	export async function preload({ params }) {
-		const res = await this.fetch(`problems/${params.problem}.json`, {
+		const res = await this.fetch(`/problems/${params.problem}.json`, {
 			credentials: "include"
 		});
-		let problem = {
-			shortName: params.problem,
-			...await res.json(),
-		};
-		return { problem };
+
+		if (res.status === 200) {
+			const problem = {
+				shortName: params.problem,
+				...await res.json(),
+			};
+
+			return { problem };
+		}
+
+		const json = await res.json();
+		this.error(res.status, json.msg);
 	}
 </script>
 
 <script>
 	import ColorButton from "../../../components/ColorButton.svelte";
 	import PieChart from "../../../components/PieChart.svelte";
-	import { error } from "../../../message-store.js";
+	import { error } from "../../../util";
 	import { goto } from "@sapper/app";
+	import { statusToColor } from "../../../util.js";
 
 	export let problem;
-
-	function statusToColor(status) {
-		switch (status) {
-			case 'accepted': return "#55b369";
-			case 'wrong-answer': return "#cc2929";
-			case 'runtime-error': return "#db7d35";
-			case 'compilation-error': return "#cf4e91";
-			case 'time-limit-exceeded': return "#2d92b7";
-			case 'memory-limit-exceeded': return "#cbd352";
-		}
-	}
 
 	let pieChartData = problem
 		.statusDistribution
@@ -82,7 +76,7 @@
 	async function vote(type) {
 		let reset = type === problem.userVote;
 
-		const res = await fetch(`problems/${problem.shortName}/vote.json`, {
+		const res = await fetch(`/problems/${problem.shortName}/vote.json`, {
 			method: "post",
 			headers: {
 				"Content-Type": "application/json"

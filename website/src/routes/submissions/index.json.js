@@ -16,7 +16,8 @@ export async function get(req, res) {
 			long_name AS "problem.longName"
 		FROM submission, problem
 		WHERE submission.problem_id = problem.id
-		AND submission.account_id = ?`,
+		AND submission.account_id = ?
+		ORDER BY timestamp DESC`,
 		req.token.id,
 	);
 

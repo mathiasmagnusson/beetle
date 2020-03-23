@@ -22,14 +22,15 @@ export async function get(req, res) {
 			max_runtime_ms AS maxRuntime,
 			max_memory_mb AS maxMemory,
 			test_cases_succeeded AS "testCases.succeeded",
-			COUNT(test_case.id) AS "testCases.total"
+			COUNT(test_case.id) AS "testCases.total",
+			account_id = ? AS requesterIsOwner
 		FROM submission, problem, account, test_case
 		WHERE submission.id = ?
 		AND submission.problem_id = problem.id
 		AND submission.account_id = account.id
 		AND test_case.problem_id = problem.id
 		GROUP BY submission.id`,
-		submission
+		[accountId, submission]
 	);
 
 	if (result.length === 0)

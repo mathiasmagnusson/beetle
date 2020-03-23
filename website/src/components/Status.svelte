@@ -2,29 +2,16 @@
 	.status {
 		padding: 10px;
 		text-transform: capitalize;
-		color: red;
 	}
-
 	.hl {
 		background-color: #ddd;
 	}
-
-	.accepted {
-		color: green;
-	}
-
-	.pending {
-		color: grey;
-	}
-
 	.status > * {
 		display: inline-block;
 	}
-
 	.spinning {
 		animation: spin 2s ease infinite;
 	}
-
 	@keyframes spin {
 		0% {
 			transform: rotateZ(0);
@@ -36,22 +23,25 @@
 </style>
 
 <script>
+	import { statusToColor } from "../util.js";
+
 	export let status;
 	export let hl = false;
 </script>
 
 <div
 	class="status"
- 	class:hl
+	class:hl
 	class:accepted={status === "accepted"}
 	class:pending={status === "pending"}
+	style="color: {statusToColor(status)}"
 >
 	<p>{status.replace("-", " ")}</p>
-	{#if status === "accepted"}
-		<p style="color: green">✔️</p>
-	{:else if status === "pending"}
-		<p class="spinning" style="color: grey">⏳</p>
+	{#if status === "pending"}
+		<p style="color: grey" class="spinning">⏳</p>
 	{:else}
-		<p style="color: red">❌</p>
+		<i class="fas fa-{
+			status === "accepted" ? "check" : "times"
+		}"></i>
 	{/if}
 </div>

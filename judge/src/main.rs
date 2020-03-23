@@ -58,8 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let _ = SETTINGS.read();
 
-    while let Ok((socket, addr)) = listener.accept() {
-        eprintln!("Incoming connection from {}", addr);
+    while let Ok((socket, _addr)) = listener.accept() {
         handle_connection(socket, &pool);
     }
 

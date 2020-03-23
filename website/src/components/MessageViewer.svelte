@@ -14,23 +14,28 @@
 		justify-content: space-between;
 		flex-direction: row;
 	}
-	a {
+	button {
 		cursor: pointer;
+		background: none;
+		border: none;
+		color: white;
+		font-size: inherit;
 	}
 </style>
 
 <script>
-	import { store } from "../message-store";
+	import { messageStore } from "../util";
 	import { onDestroy } from "svelte";
 	import { slide } from "svelte/transition";
 
 	let messages = [];
-	onDestroy(store.subscribe($messages => {
+	onDestroy(messageStore.subscribe($messages => {
 		messages = $messages;
 	}));
 
 	function remove(id) {
-		store.update(messages => messages.filter(message => message.id !== id));
+		messageStore.update(messages =>
+			messages.filter(message => message.id !== id));
 	}
 </script>
 
@@ -38,9 +43,9 @@
 	{#each messages as message (message.id)}
 		<li transition:slide|local style="background-color: {message.color}">
 			<span>{message.text}</span>
-			<a on:click={() => remove(message.id)}>
+			<button on:click={() => remove(message.id)}>
 				<i class="fas fa-times"></i>
-			</a>
+			</button>
 		</li>
 	{/each}
 </ul>

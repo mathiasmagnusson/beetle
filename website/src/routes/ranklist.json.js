@@ -7,8 +7,8 @@ export async function get(req, res) {
 	start = parseInt(start);
 	count = parseInt(count);
 
-	if (isNaN(start)) start = 0;
-	if (isNaN(count)) count = 20;
+	if (isNaN(start) || start < 0) start = 0;
+	if (isNaN(count) || count <= 0) count = 20;
 
 	const ranklist = await database.query(
 		`SELECT DISTINCT

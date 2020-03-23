@@ -1,10 +1,11 @@
 <style>
-	a {
+	button {
 		position: relative;
 		left: -1px;
 		top: -2px;
 		display: inline-block;
-		padding: 0.4em 1.3em;
+		font-size: inherit;
+		padding: 3% 7%;
 		color: white;
 		background-color: var(--bg);
 		border-radius: 0.3em;
@@ -12,13 +13,14 @@
 		user-select: none;
 		transition: 0.1s ease-in-out;
 		cursor: pointer;
+		border: none;
 	}
-	a:hover {
+	button:hover {
 		left: 0;
 		top: 0;
 		box-shadow: 0 0 0 0 #444;
 	}
-	a :global(i) {
+	button :global(i) {
 		margin-left: 5px;
 	}
 </style>
@@ -28,9 +30,9 @@
 	export let onclick = () => {};
 </script>
 
-<a
+<button
 	style="--bg: {bg}"
 	on:click={onclick}
 >
 	<slot></slot>
-</a>
+</button>
