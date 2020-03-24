@@ -112,7 +112,13 @@ export async function post(req, res) {
 	if (typeof description !== "string")
 		return responses.missingParam(res, "description");
 
-	const saneDesc = sanitizeHtml(description);
+	const saneDesc = sanitizeHtml(description, {
+		allowedTags: [
+			...sanitizeHtml.defaults.allowedTags,
+			"h2", "sup", "sub", "img"
+		],
+		disallowedTagsMode: "escape",
+	});
 
 	if (!(testCases instanceof Array))
 		return res.status(400).send({
