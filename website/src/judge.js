@@ -12,12 +12,10 @@ socket.on("ready", () => {
 });
 
 socket.on("data", async data => {
-	const msg = JSON.parse(data);
-	if (msg.msg) return console.error(msg.msg);
+	const packet = JSON.parse(data);
+	if (packet.type === "error") return console.error(packet.msg);
 
-	// { id: 37, testCasesSuceeded: 1, status: 'pending', maxTime: 0 }
-	// { id: 37, testCasesSuceeded: 2, status: 'accepted', maxTime: 0 }
-	const { id, testCasesSuceeded, status, maxTime, maxMemory } = msg;
+	const { id, testCasesSuceeded, status, maxTime, maxMemory } = packet;
 
 	let kebabStatus =
 		status === "wrongAnswer" ? "wrong-answer" :

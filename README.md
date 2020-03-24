@@ -23,11 +23,11 @@
 
 * Frontend:
   - [ ] Titles
-  - [ ] Register
+  - [x] Register
   - [x] Login
-  - [ ] Change email
-  - [ ] Change password
-  - [ ] Get account (submissions etc.)
+  - [x] Change email
+  - [x] Change password
+  - [x] Get account (submissions etc.)
   - [x] Get specific problem
   - [x] Problem submission stats
   - [x] Get problem list

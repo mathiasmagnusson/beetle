@@ -15,13 +15,18 @@ export async function get(req, res) {
 			username,
 			full_name AS fullName,
 			COALESCE(SUM(points), 0) AS points
-		FROM account
-		LEFT JOIN submission
-		ON account_id = account.id
-		LEFT JOIN problem
-		ON problem.id = submission.problem_id AND author_id != account.id
-		WHERE status = 'accepted'
-		GROUP BY account.id, submission.id
+		FROM account, problem
+		WHERE account.id != author_id
+		AND (account.id, problem.id) IN (
+			SELECT
+				account_id,
+				problem_id
+			FROM
+				submission
+			WHERE
+				status = 'accepted'
+		)
+		GROUP BY account.id
 		ORDER BY points DESC
 		LIMIT ?, ?`,
 		[start, count]

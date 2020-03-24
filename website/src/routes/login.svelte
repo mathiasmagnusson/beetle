@@ -1,21 +1,30 @@
 <style>
-	main {
+	.wrapper {
+		min-height: 100vh;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		height: calc(100vh - 60px);
+		padding: 200px 0;
+	}
+	main {
+		width: 80%;
+		max-width: 700px;
+		padding: 20px;
+		background-color: white;
+		border-radius: 5px;
+		box-shadow: 0 0 10px -6px #0008;
 	}
 	h1 {
+		border-bottom: 1px solid #ccc;
 		margin-bottom: 20px;
 	}
-	section {
-		width: 60%;
-		max-width: 600px;
-	}
-	.grid-wrapper {
+	.grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 10px;
+	}
+	button {
+		grid-column: 1 / -1;
 	}
 	.message {
 		color: red;
@@ -73,19 +82,22 @@
 	}
 </script>
 
-<main>
-	<section>
+<div class="wrapper">
+	<main>
 		<h1>Log in</h1>
-		<div class="grid-wrapper">
+		<div class="grid">
 			<label for="username">Username</label>
 			<input id="username" type="text" bind:value={username} />
 			<label for="password">Password</label>
 			<input id="password" type="password" bind:value={password} />
-			<a href="/register">Register</a>
 			<button on:click={submit}>Log in</button>
+			<p>
+				New to beetle?
+				<a href="/register">Register an account here!</a>
+			</p>
 		</div>
 		{#each msgs as { txt, success } (txt)}
 			<p transition:slide|local={{ duration: 200 }} class="message" class:success>{txt}</p>
 		{/each}
-	</section>
-</main>
+	</main>
+</div>

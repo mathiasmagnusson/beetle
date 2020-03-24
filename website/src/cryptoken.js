@@ -117,7 +117,7 @@ export default function cryptoken(options) {
 			if (!"token" in req || typeof req.token !== "object") return;
 
 			res.cookie("token", encrypt(req.token, algorithm, keys, randSize), {
-				httpOnly: false,
+				httpOnly: true,
 				maxAge,
 			});
 		});

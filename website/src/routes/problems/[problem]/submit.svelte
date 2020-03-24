@@ -43,6 +43,7 @@
 
 <script>
 	import { goto } from "@sapper/app";
+	import { error } from "../../../util";
 
 	export let supportedLanguages;
 	export let problemName;
@@ -67,8 +68,10 @@
 		if (res.status === 200) {
 			const id = json.id;
 
-			goto(`submissions/${id}`);
+			return goto(`submissions/${id}`);
 		}
+
+		error(json.msg);
 	}
 </script>
 

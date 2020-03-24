@@ -108,7 +108,7 @@
 	<ul>
 		<li class="logo">
 			<a href="/" class:active={segment === undefined}>
-				<i style="color: #50b050" class="fas fa-otter"></i>
+				<i style="color: #50b050" class="fas fa-bug"></i>
 				<span>beetle</span>
 			</a>
 		</li>

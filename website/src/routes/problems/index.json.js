@@ -1,6 +1,7 @@
 import database from "../../database.js";
 import depthify from "../../depthify.js";
 import * as responses from "../../responses.js";
+import sanitizeHtml from "sanitize-html";
 
 export async function get(req, res) {
 	let { start, count } = req.query;
@@ -111,6 +112,8 @@ export async function post(req, res) {
 	if (typeof description !== "string")
 		return responses.missingParam(res, "description");
 
+	const saneDesc = sanitizeHtml(description);
+
 	if (!(testCases instanceof Array))
 		return res.status(400).send({
 			msg: "testCases must be an array"
@@ -161,7 +164,7 @@ export async function post(req, res) {
 				validationScript,
 				timeLimit,
 				memoryLimit,
-				description,
+				saneDesc,
 			]
 		);
 	}

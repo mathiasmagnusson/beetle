@@ -28,14 +28,20 @@ export async function get(req, res) {
 	);
 
 	const pointsResult = await database.query(
-		`SELECT SUM(points) AS points
-		FROM account, problem, submission
-		WHERE account.id = ?
-		AND submission.account_id = account.id
-		AND problem.id = submission.problem_id
-		AND account.id != problem.author_id
-		AND submission.status = 'accepted'
-		GROUP BY account.id`,
+		`SELECT
+			COALESCE(SUM(points), 0) AS points
+		FROM problem
+		WHERE id IN (
+			SELECT
+				problem_id
+			FROM
+				account,
+				submission
+			WHERE account.id = ?
+			AND account_id = account.id
+			AND author_id != account.id
+			AND status = 'accepted'
+		)`,
 		req.token.id
 	);
 
