@@ -1,5 +1,7 @@
 import { writable } from "svelte/store";
 
+export let loggedIn = writable(undefined);
+
 export function statusToColor(status) {
 	switch (status) {
 		case 'accepted': return "#55b369";

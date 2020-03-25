@@ -36,6 +36,8 @@
 
 <script>
 	import { slide } from "svelte/transition";
+	import { loggedIn } from "../util";
+	import { goto } from "@sapper/app";
 
 	let username = "";
 	let password = "";
@@ -68,16 +70,16 @@
 		let json;
 		try {
 			json = await res.json();
-		}
-		catch (err) {
+		} catch (err) {
 			return msgs = [...msgs, { txt: "Invalid server response" }];
 		}
 
-		if (res.status != 200)
-			return msgs = [...msgs, { txt: json.msg }];
-		else if (json.msg) {
+		if (res.status === 200) {
 			msgs = [...msgs, { txt: json.msg, success: true }];
-			setTimeout(() => window.location.href = "/", 200);
+			setTimeout(() => goto("/"), 200);
+			loggedIn.set(true);
+		} else {
+			msgs = [...msgs, { txt: json.msg }];
 		}
 	}
 </script>

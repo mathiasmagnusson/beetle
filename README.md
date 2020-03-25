@@ -53,7 +53,7 @@
   - [x] Bind external libs etc into sandbox
 
 * Inlämmningsbara språk:
-  - [ ] c++
+  - [x] c++
   - [x] c
   - [ ] python3
   - [ ] python2

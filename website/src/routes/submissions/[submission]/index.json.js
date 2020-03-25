@@ -1,6 +1,7 @@
-import database from "../../../database.js";
-import * as responses from "../../../responses.js";
-import depthify from "../../../depthify.js";
+import database from "../../../database";
+import * as responses from "../../../responses";
+import depthify from "../../../depthify";
+import { langName } from "../../../judge";
 
 export async function get(req, res) {
 	const { submission } = req.params;
@@ -40,6 +41,8 @@ export async function get(req, res) {
 		return res.status(403).send({
 			msg: "You dont have access to this submission"
 		});
+
+	result[0].lang = langName(result[0].lang);
 
 	res.send(depthify({ ...result[0], accountId: undefined }));
 }

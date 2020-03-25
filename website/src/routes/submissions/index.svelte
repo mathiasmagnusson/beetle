@@ -38,20 +38,19 @@
 </style>
 
 <script context="module">
-	import { warning } from "../../util";
-
 	export async function preload({ params, query }) {
 		const res = await this.fetch("submissions.json", {
-			credentials: 'include'
+			credentials: "include"
 		});
 
-		if (res.status == 401) {
-			warning("You must log in first");
-			this.redirect(302, "/login");
+		if (res.status === 200) {
+			const submissions = await res.json();
+			return { submissions };
 		}
 
-		const submissions = await res.json();
-		return { submissions };
+		const json = await res.json();
+
+		this.error(res.status, json.msg);
 	}
 </script>
 

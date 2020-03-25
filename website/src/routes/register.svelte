@@ -36,6 +36,7 @@
 
 <script>
 	import { slide } from "svelte/transition";
+	import { goto } from "@sapper/app";
 
 	let username = "";
 	let email = "";
@@ -77,9 +78,10 @@
 		const json = await res.json();
 
 		if (res.status === 200) {
-			return msgs = [...msgs, { txt: json.msg, success: true }];
+			msgs = [...msgs, { txt: json.msg, success: true }];
+			setTimeout(() => goto("/login"), 200);
 		} else {
-			return msgs = [...msgs, { txt: json.msg }];
+			msgs = [...msgs, { txt: json.msg }];
 		}
 	}
 </script>

@@ -6,4 +6,11 @@ languages:
     compiler_args: ["-static", "-O3", "-o", "program", "%"]
     dependencies:
       - "/lib64/ld-linux-x86-64.so.2"
+  cc:
+    name: "C++"
+    file_suffix: "cc"
+    compiler_command: "g++"
+    compiler_args: ["-static", "-O3", "-o", "program", "%"]
+    dependencies:
+      - "/lib64/ld-linux-x86-64.so.2"
 judge_inst_uid: 1000

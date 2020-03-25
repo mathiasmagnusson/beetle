@@ -120,11 +120,17 @@ impl Sandbox {
 
         let start_time = time::Instant::now();
 
+        let mut input_bytes: Vec<u8> = input.bytes().collect();
+
+        if !input_bytes.ends_with(&[b'\n']) {
+            input_bytes.push(b'\n');
+        }
+
         child
             .stdin
             .as_mut()
             .ok_or(Error::JudgeError)?
-            .write_all(input.as_bytes())
+            .write_all(&input_bytes)
             .map_err(|_| Error::JudgeError)?;
 
         let mut elapsed;

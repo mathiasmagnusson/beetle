@@ -40,6 +40,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 7px;
+		margin-bottom: 10px;
 	}
 </style>
 
@@ -60,7 +61,7 @@
 </script>
 
 <script>
-	import { error, message, warning } from "../../util";
+	import { error, message, warning, loggedIn } from "../../util";
 	import { goto } from "@sapper/app";
 
 	export let account;
@@ -74,6 +75,8 @@
 		const res = await fetch(`${window.location}/logout.json`, { method: "post" });
 
 		const json = await res.json();
+
+		loggedIn.set(false);
 
 		if (json.wasLoggedIn) {
 			message("Logged out");
@@ -212,8 +215,9 @@
 					{/each}
 				</ul>
 			{:else}
-				You have not created any problems
+				You have not (yet) created any problems.
 			{/if}
+			<button on:click={() => goto("/problems/create-new")}>Create a problem</button>
 		</section>
 	</main>
 </div>

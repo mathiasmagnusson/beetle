@@ -12,7 +12,13 @@ socket.on("ready", () => {
 });
 
 socket.on("data", async data => {
-	const packet = JSON.parse(data);
+	let packet;
+	try {
+		packet = JSON.parse(data);
+	}
+	catch (err) {
+		return console.error("Invalid json package received from judge:", data);
+	}
 	if (packet.type === "error") return console.error(packet.msg);
 
 	const { id, testCasesSuceeded, status, maxTime, maxMemory } = packet;
@@ -44,6 +50,11 @@ socket.on("data", async data => {
 	);
 });
 
+export function langName(lang) {
+	let langs = supportedLanguages();
+	return lang in langs ? langs[lang].name : "Unsupported language";
+}
+
 export function supportsLang(lang) {
 	return Object.keys(supportedLanguages()).includes(lang);
 }
@@ -51,6 +62,7 @@ export function supportsLang(lang) {
 export function supportedLanguages() {
 	return {
 		"c": { name: "C" },
+		"cc": { name: "C++" },
 	};
 }
 

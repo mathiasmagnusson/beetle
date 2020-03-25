@@ -99,9 +99,22 @@
 </style>
 
 <script>
+	import { loggedIn } from "../util";
+	import { onMount } from "svelte";
+
 	export let segment;
 
-	const isLoggedIn = true;
+	let isLoggedIn = false;
+
+	loggedIn.subscribe($isLoggedIn => isLoggedIn = $isLoggedIn);
+
+	onMount(async () => {
+		const res = await fetch("/is-logged-in.json");
+
+		const isLoggedIn = await res.json();
+
+		loggedIn.set(isLoggedIn);
+	});
 </script>
 
 <aside>
