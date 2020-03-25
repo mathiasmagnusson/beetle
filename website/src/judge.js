@@ -3,6 +3,10 @@ import database from "./database.js";
 
 let socket = net.connect(48753, "127.0.0.1");
 
+socket.on("error", () => {
+	console.error("Could not connect to judge");
+});
+
 socket.on("connect", () => {
 	socket.setEncoding("utf8");
 });
@@ -67,5 +71,11 @@ export function supportedLanguages() {
 }
 
 export function submit(submission) {
-	socket.write(JSON.stringify(submission) + "\n");
+	if (socket)
+		socket.write(JSON.stringify(submission) + "\n");
+	else {
+		console.error(
+			`Not connected to judge. Not submitting ${submission.id}.`
+		);
+	}
 }

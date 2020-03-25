@@ -4,12 +4,5 @@
 	"name": "Beetle",
 	"short_name": "Beetle",
 	"display": "minimal-ui",
-	"start_url": "/",
-	"icons": [
-		{
-			"src": "TODO.png",
-			"sizes": "256x256",
-			"type": "image/png"
-		}
-	]
+	"start_url": "/"
 }
