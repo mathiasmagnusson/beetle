@@ -1,5 +1,8 @@
 FROM debian:latest
 
+RUN apt update
+RUN apt install -y gcc g++
+
 RUN groupadd judge-master
 RUN groupadd judge
 RUN useradd judge-master -g judge-master -G judge

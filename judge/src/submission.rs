@@ -48,8 +48,6 @@ impl Submission {
     pub fn judge<T: Write>(&self, writable: &mut T) {
         eprintln!("Judging submission {}", self.id);
 
-        println!("time_limit: {}", self.time_limit);
-
         // create sandbox
         let sandbox = match Sandbox::new(&self.lang, &self.source) {
             Ok(s) => s,
