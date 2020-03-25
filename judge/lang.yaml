@@ -13,4 +13,4 @@ languages:
     compiler_args: ["-static", "-O3", "-o", "program", "%"]
     dependencies:
       - "/lib64/ld-linux-x86-64.so.2"
-judge_inst_uid: 1000
+judge_inst_uid: JUDGE-INSTANCE-USER-ID

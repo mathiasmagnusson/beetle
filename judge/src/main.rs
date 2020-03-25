@@ -54,7 +54,7 @@ const BOOMER: () = ();
 fn main() -> Result<(), Box<dyn Error>> {
     let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
 
-    let listener = TcpListener::bind("127.0.0.1:48753")?;
+    let listener = TcpListener::bind("0.0.0.0:48753")?;
 
     let _ = SETTINGS.read();
 
