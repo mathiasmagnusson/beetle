@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[swedish]{article}
 
 \author{Mathias Magnusson}
 \title{Le gymnasiearbete}
@@ -42,7 +42,14 @@ en säker webbserver skapas samt hur opålitlig kod kan exekveras på ett
 \subsection{Frågeställningar}
 
 \begin{itemize}
-	\item Hur exekveras opålitlig kod på ett säkert sätt?
+	\item Hur exekveras opålitlig kod på ett säkert sätt? Alltså utan att en
+		illvillig användare har möjligheten att:
+		\begin{itemize}
+			\item Läcka de specifika testdata som körs för att avgöra huruvida
+				användaren har klarat uppgiften.
+			\item Komma åt känslig användardata.
+			\item På övrigt sätt utnyttja servern där webbsidan hostas.
+		\end{itemize}
 	\item
 		Hur mäts ett programs körningstid samt minnesallokeringsmängd på ett
 		konsekvent sätt?
@@ -60,12 +67,66 @@ Mina bara händer och BIG BRAIN.
 
 \subsection{Avgränsningar}
 
+\subsection{Termer}
+
+\begin{itemize}
+	\item Server(?)
+\end{itemize}
+
 \section{Genomförande}
 
+\subsection{Planering}
+
 Projektets genomförande inleddes med att undersöka hur opålitlig kod, inlämnat
-av användare, kan exekveras utan att servern utsätts för större säkerhetsrisker.
-I början var tanken om att köra programmen i en docker-instans.
-\href{https://www.docker.com}{Docker} är som en Virtuell
+av användare, kan exekveras utan att servern utsätts för allvarliga
+säkerhetsrisker. I början var tanken att köra programmen i en Docker-instans.
+\href{https://www.docker.com}{Docker} har förmågan att skapa s.k.
+\textit{containrar}, vilka fungerar likt egna datorer eller virtuella maskiner,
+då de har sitt egna filsystem o.dyl.
+
+Planen var att skapa en ny container varje gång en användare lämnar in ett
+program för körning. Docker är inte gjort att användas så och några problem som
+skulle uppstå är:
+\begin{itemize}
+	\item Prestandakravet skulle snabbt bli väldigt högt, då ${prestandan}^{-1}$
+		som krävs för att starta en Docker-container är betydligt högre än det
+		som krävs för att start ett vanligt program.
+	\item Om något skulle gå fel med webbservern när en användares program körs
+		finns risken att vissa containrar aldrig skulle bli avstängda och
+		borttagna.
+	\item Om programmet har tillgång till hela dess container är det näst
+		intill omöjligt att hindra det från att komma åt internet och därmed
+		möjligheten att bland annat läcka testdata.
+\end{itemize}
+Med detta i åtanke lämnades idén om att använda Docker.
+
+% TODO: g&b=?=retarded
+I grund och botten är det två huvudområden där användarens program måste
+isoleras: åtkomst till filsystemet, samt åtkomst till internet. Om båda dessa är
+helt förhindrade är det enda ett program kan göra att läsa in data från dess
+inmatningsström, skriva ut data till dess utmatningsström, samt utföra
+beräkningar på denna data. Inget av detta utgör säkerhetsrisker.
+
+\subsection{Isolering från filsystem}
+
+För att förhindra användarens program från att komma åt filer på servern används
+Linux-syscallet \texttt{chroot}. Chroot står för change root,
+\textit{ändra rot}, och dess effekt är att "på låtsas" ändra filsystemets rot
+för programmet som körs. På så sätt kan ett programs tillgång till filsystemet
+begränsas till en viss mapp, vari hur stor eller liten del av det övriga
+filsystemets som än önskas kan tillgängliggöras. Den stora fördelen med denna
+flexibilitet är att åtkomst till flertalet filer kan krävas för att köra vissa
+program. För att exempelvis köra ett program skrivet i Java krävs bland annat en
+\textit{Java virtual machine}, samt ytterligare några bibliotek som
+\textit{JVM}en laddar in när den körs.
+
+Man måste vara root.
+
+setuid-bit
+
+suid(annan uid)
+
+C-skriptet
 
 \section{Resultat}
 
