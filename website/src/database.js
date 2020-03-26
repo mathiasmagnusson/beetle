@@ -76,6 +76,7 @@ class Database {
 			status ENUM(
 				'pending',
 				'accepted',
+				'judge-error',
 				'wrong-answer',
 				'runtime-error',
 				'compilation-error',

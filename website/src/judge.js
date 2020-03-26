@@ -28,6 +28,7 @@ socket.on("data", async data => {
 	const { id, testCasesSuceeded, status, maxTime, maxMemory } = packet;
 
 	let kebabStatus =
+		status === "judgeError" ? "judge-error" :
 		status === "wrongAnswer" ? "wrong-answer" :
 		status === "runtimeError" ? "runtime-error" :
 		status === "compilationError" ? "compilation-error" :
