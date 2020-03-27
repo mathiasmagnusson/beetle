@@ -1,4 +1,4 @@
-\documentclass[swedish]{article}
+\documentclass{article}
 
 \author{Mathias Magnusson}
 \title{Le gymnasiearbete}
@@ -6,6 +6,29 @@
 
 \setcounter{tocdepth}{2}
 \renewcommand*\contentsname{Innehållsförteckning}
+
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{clrcomments}{rgb}{0,0.5,0}
+\definecolor{clrstr}{rgb}{0.41,0.15,0.10}
+\definecolor{clrkw}{rgb}{0.2,0.4,0.8}
+\definecolor{clrbg}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+	backgroundcolor=\color{clrbg},
+	commentstyle=\color{clrcomments},
+	keywordstyle=\color{clrkw},
+	stringstyle=\color{clrstr},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    numbers=left,
+    showstringspaces=false,
+    tabsize=4
+}
+
+\lstset{style=codestyle}
 
 \usepackage[
 	pdfborder={0 0 0},
@@ -39,6 +62,19 @@ en säker webbserver skapas samt hur opålitlig kod kan exekveras på ett
 
 \subsection{Bakgrund}
 
+\subsection{Rekommenderade kunskaper}
+
+För att till fullo förstå helheten av denna rapport eller åtminstone inför ett
+försök att efterlikna arbetet som här presenteras, är det rekommenderat att:
+
+\begin{itemize}
+	\item ha grundläggande kunskaper om programmering,
+	\item känna sig bekväm med datorer och användandet av en kommandotolk,
+	\item förstå översiktligt vad operativsystemet Linux är,
+	\item ha en grundläggande förståelse för en brandväggs uppgift,
+	\item samt ...
+\end{itemize}
+
 \subsection{Frågeställningar}
 
 \begin{itemize}
@@ -67,10 +103,8 @@ Mina bara händer och BIG BRAIN.
 
 \subsection{Avgränsningar}
 
-\subsection{Termer}
-
 \begin{itemize}
-	\item Server(?)
+	\item
 \end{itemize}
 
 \section{Genomförande}
@@ -100,7 +134,6 @@ skulle uppstå är:
 \end{itemize}
 Med detta i åtanke lämnades idén om att använda Docker.
 
-% TODO: g&b=?=retarded
 I grund och botten är det två huvudområden där användarens program måste
 isoleras: åtkomst till filsystemet, samt åtkomst till internet. Om båda dessa är
 helt förhindrade är det enda ett program kan göra att läsa in data från dess
@@ -110,7 +143,8 @@ beräkningar på denna data. Inget av detta utgör säkerhetsrisker.
 \subsection{Isolering från filsystem}
 
 För att förhindra användarens program från att komma åt filer på servern används
-Linux-syscallet \texttt{chroot}. Chroot står för change root,
+syscallet \textit{chroot}. Ett syscall är en funktion som anropar
+operativsystemets kärna direkt. Chroot står för change root,
 \textit{ändra rot}, och dess effekt är att "på låtsas" ändra filsystemets rot
 för programmet som körs. På så sätt kan ett programs tillgång till filsystemet
 begränsas till en viss mapp, vari hur stor eller liten del av det övriga
@@ -120,13 +154,163 @@ program. För att exempelvis köra ett program skrivet i Java krävs bland annat
 \textit{Java virtual machine}, samt ytterligare några bibliotek som
 \textit{JVM}en laddar in när den körs.
 
-Man måste vara root.
+Nackdelen men att använda chroot är att endast användaren \textit{root} har
+tillgång till syscallet. Användaren root är datorns administratör och att
+exekvera an\-vändarens program som denna användare är i sig en stor säkerhetsrisk.
+Dessutom är det osäkert att programmet som startar användarens program kör som
+root, eftersom ett potentiellt säkerhetshål i detta program blir farligare då
+det bland annat har tillgång till att skriva och läsa alla filer på datorn.
 
-setuid-bit
+Lösningen som användes i detta projekt var att ha ett kort program vars enda
+uppgift är att använda chroot för att stänga in sig självt, ändra vilken
+användare den kör som och sist starta användarens program. För att ha tillgång
+till chroot och att ändra vilken användare programmet körs som måste programmet
+startas som root.
 
-suid(annan uid)
+Hur startas då detta program som root, utan att programmet som startar det måste
+köra som root? I Linux kan ett program markeras med \textit{setuid}-biten,
+vilket står för \textit{set user id}, eller \textit{sätt användar-id}. Med
+denna aktiverad på ett program körs programmet som dess ägare, istället för
+användaren som exekverar det. Om programmet då har denna bit satt och ägs av
+root så kommer programmet köras som root och därmed ha tillgång till bland annat
+chroot.
 
-C-skriptet
+Sista delen i pusslet är att köra användarens program som en annan användare än
+root. För att åstadkomma detta används syscallet \textit{setuid}, som låter
+programmet ändra vilken användare det körs som. Även detta syscall kräver att
+programmet från början körs som root, men det problemet är redan löst. För att
+sedan köra programmet används syscallet \textit{execve}, vars effekt är att
+"byta ut" det anropande programmet mot ett annat. In- och utmatningsströmmarna
+ärvs så kommunikation med användarens program fungerar på samma sätt som om man
+exekverade det direkt.
+
+\hypertarget{executor}{}
+
+För att implementera allt detta valdes under detta projekt att skapa kort
+program i språket C. Via programmets argument får det information om vilken mapp
+den ska restriktera sig till, vilket program den ska exekvera, samt vilken
+användare programmet ska köras som. Programmet kommer härifrån refereras till
+som \textit{executor}. Nedan följer källkoden för programmet:
+
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <dirent.h>
+#include <string.h>
+
+// build:
+	// gcc -static -O3 -o executor executor.c
+	// strip executor
+	// sudo chown root:judge-master executor
+	// sudo chmod 4750 executor
+
+#define DIRECTORY 1
+#define NEW_UID 2
+#define PROGRAM_NAME 3
+#define REQ_ARGS 3
+
+#define die(x) { fprintf(stderr, x); return -1; }
+
+int main(int argc, char** argv) {
+	if (argc < 4) die(
+		"Syntax: %s <dir> <uid> <program> <args...>\n",
+		argv[0]
+	);
+
+	if (chdir(argv[DIRECTORY]))
+		die("Could not change directory to %s\n", argv[1]);
+
+	if (chroot(".")) die("Could not set root dir\n", cwd);
+
+	int uid = atoi(argv[NEW_UID]);
+
+	if (setuid(uid))
+		die("Could not set uid to %d\n", uid);
+
+	char** child_argv = malloc(sizeof(char*) * (argc - REQ_ARGS + 1));
+	child_argv[0] = argv[PROGRAM_NAME];
+	int i;
+	for (i = 1; i < argc - REQ_ARGS; i++) {
+		child_argv[i] = malloc(
+			sizeof (char) * (strlen(argv[i + REQ_ARGS]) + 1)
+		);
+		strcpy(child_argv[i], argv[i + REQ_ARGS]);
+	}
+	child_argv[i] = NULL;
+
+	execve(argv[PROGRAM_NAME], child_argv, 0);
+	die("execve returned (failed) errno: %d\n", errno);
+}
+\end{lstlisting}
+
+\subsection{Isolering från kommunikation via internet}
+
+Att ansluta till exempelvis ``localhost'' eller ``google.com'' är redan omöjligt
+eftersom detta kräver att vissa filer läses för att ta reda på vilka IP-adresser
+dessa domännamn refererar till.
+
+Men att skapa en anslutning till exempelvis ``127.0.0.1'' eller
+``216.58.211.14'' går fortfarande.
+
+För att lösa detta testades först att återigen använda Docker. Den här gången
+med dess argument \texttt{--net=none} vid skapandet av en container. Detta gör
+att containern inte får någon tillgång internet. Tyvärr krävs förmågan att kunna
+kommunicera med containern utifrån för att bland annat skicka in och ut testdata
+och svar.
+
+Sedan testades att använda programmet \textit{iptables}. Iptables kan användas
+för att konfigurera brandväggen och därmed filtrera bort viss trafik baserat på
+vissa parametrar.
+
+Först gjordes ett försök att fortfarande låta användarens program köras i en
+docker-container och att i den filtrera bort all utgående trafik, samt all
+ingående trafik förutom på en port, vilken skulle vara upptagen med annan
+trafik och därmed även den blockerad. Detta kan åstadkommas med följande
+kommandon:
+
+\texttt{iptables -A OUTPUT -j DROP}
+
+\texttt{iptables -A INPUT --dport 48753 -j ALLOW}
+
+\texttt{iptables -A INPUT -j DROP}
+\\
+Detta blockerar all trafik som ska blockeras. Men den första raden blockerar
+inte bara alla nya anslutningar utåt, utan \textbf{all utgående trafik} och
+hindrar därmed containern från att rapportera tillbaka några resultat.
+
+Den slutliga lösningen som infördes involverar ej Docker. Istället skapas
+en ny användare på servern vid namnet \textit{judge-instance}, vars enda
+syfte är att exekvera användares program. Det är alltså \textit{judge-instance}s
+användar-id som skickas in till \hyperlink{executor}{executor}.
+Detta id kan framtas med kommandot:
+
+\texttt{id -u judge-instance}
+\\
+Slutligen blockeras den nya användaren från att komma åt internet med följande
+kommandon:
+
+\texttt{iptables -A OUTPUT -m owner --uid-owner judge-instance -j DROP}
+\\
+Brandväggen kommer därmed blockera all utgående trafik från användarinlämnade
+program.
+
+\subsection{Domarsystem}
+
+För att kontinuerligt och automatiskt kunna ta emot och verifiera korrektheten
+hos användares program utvecklades sedan en ``domare''. Domaren är gjord i
+programmeringsspråket \href{https://rust-lang.org}{Rust}, tack vare den
+hårdvarunära kontrollen språket ger tillgång till, samtidigt som språket ger
+utvecklaren tillgång till bekväma funktionaliteter som oftast hittas bland språk
+av "högre nivå" som exempelvis Haskell och Javascript. Dessutom har Rust ett
+välfungerande och lättanvänt byggsystem som automatiskt laddar ner och
+kompilerar bibliotek som används.
+
+\subsection{web-api}
+
+\subsection{frontend}
 
 \section{Resultat}
 
