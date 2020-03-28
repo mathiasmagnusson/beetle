@@ -1,34 +1,16 @@
 \documentclass{article}
 
 \author{Mathias Magnusson}
-\title{Le gymnasiearbete}
+\title{Lè gÿmñæŝíéàrḃêtë}
 \date{}
 
-\setcounter{tocdepth}{2}
 \renewcommand*\contentsname{Innehållsförteckning}
 
 \usepackage{xcolor}
-\usepackage{listings}
+\usepackage{minted}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
 
-\definecolor{clrcomments}{rgb}{0,0.5,0}
-\definecolor{clrstr}{rgb}{0.41,0.15,0.10}
-\definecolor{clrkw}{rgb}{0.2,0.4,0.8}
-\definecolor{clrbg}{rgb}{0.95,0.95,0.92}
-
-\lstdefinestyle{codestyle}{
-	backgroundcolor=\color{clrbg},
-	commentstyle=\color{clrcomments},
-	keywordstyle=\color{clrkw},
-	stringstyle=\color{clrstr},
-    basicstyle=\ttfamily\footnotesize,
-    breaklines=true,
-    captionpos=b,
-    numbers=left,
-    showstringspaces=false,
-    tabsize=4
-}
-
-\lstset{style=codestyle}
+\renewcommand\listingscaption{Kodavsnitt}
 
 \usepackage[
 	pdfborder={0 0 0},
@@ -36,6 +18,15 @@
 	linkcolor=black,
 	urlcolor=blue
 ]{hyperref}
+
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+			{-2.5ex\@plus -1ex \@minus -.25ex}%
+			{1.25ex \@plus .25ex}%
+			{\normalfont\normalsize\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
 
 \begin{document}
 
@@ -80,6 +71,7 @@ försök att efterlikna arbetet som här presenteras, är det rekommenderat att:
 \begin{itemize}
 	\item Hur exekveras opålitlig kod på ett säkert sätt? Alltså utan att en
 		illvillig användare har möjligheten att:
+		% kanske borde flytta det här?
 		\begin{itemize}
 			\item Läcka de specifika testdata som körs för att avgöra huruvida
 				användaren har klarat uppgiften.
@@ -103,9 +95,9 @@ Mina bara händer och BIG BRAIN.
 
 \subsection{Avgränsningar}
 
-\begin{itemize}
-	\item
-\end{itemize}
+% \begin{itemize}
+% 	\item
+% \end{itemize}
 
 \section{Genomförande}
 
@@ -115,16 +107,16 @@ Projektets genomförande inleddes med att undersöka hur opålitlig kod, inlämn
 av användare, kan exekveras utan att servern utsätts för allvarliga
 säkerhetsrisker. I början var tanken att köra programmen i en Docker-instans.
 \href{https://www.docker.com}{Docker} har förmågan att skapa s.k.
-\textit{containrar}, vilka fungerar likt egna datorer eller virtuella maskiner,
-då de har sitt egna filsystem o.dyl.
+\textit{containrar}, vilka fungerar likt virtuella maskiner, och är därmed
+isolerade från resten av servern.
 
 Planen var att skapa en ny container varje gång en användare lämnar in ett
 program för körning. Docker är inte gjort att användas så och några problem som
 skulle uppstå är:
 \begin{itemize}
-	\item Prestandakravet skulle snabbt bli väldigt högt, då ${prestandan}^{-1}$
-		som krävs för att starta en Docker-container är betydligt högre än det
-		som krävs för att start ett vanligt program.
+	\item Prestandakravet skulle bli onödigt högt, då tiden det tar att starta
+		en Docker-container är betydligt längre än det som krävs för att starta
+		ett vanligt program.
 	\item Om något skulle gå fel med webbservern när en användares program körs
 		finns risken att vissa containrar aldrig skulle bli avstängda och
 		borttagna.
@@ -132,7 +124,8 @@ skulle uppstå är:
 		intill omöjligt att hindra det från att komma åt internet och därmed
 		möjligheten att bland annat läcka testdata.
 \end{itemize}
-Med detta i åtanke lämnades idén om att använda Docker.
+Med detta i åtanke ansågs ej längre Docker vara ett passande verktyg för detta
+projekt.
 
 I grund och botten är det två huvudområden där användarens program måste
 isoleras: åtkomst till filsystemet, samt åtkomst till internet. Om båda dessa är
@@ -192,7 +185,13 @@ den ska restriktera sig till, vilket program den ska exekvera, samt vilken
 användare programmet ska köras som. Programmet kommer härifrån refereras till
 som \textit{executor}. Nedan följer källkoden för programmet:
 
-\begin{lstlisting}[language=C]
+\begin{minted}[
+	linenos,
+	autogobble,
+	breaklines,
+	bgcolor=codebg,
+	tabsize=4,
+]{c}
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -202,7 +201,7 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 #include <string.h>
 
 // build:
-	// gcc -static -O3 -o executor executor.c
+	// gcc -O3 -o executor executor.c
 	// strip executor
 	// sudo chown root:judge-master executor
 	// sudo chmod 4750 executor
@@ -212,7 +211,7 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 #define PROGRAM_NAME 3
 #define REQ_ARGS 3
 
-#define die(x) { fprintf(stderr, x); return -1; }
+#define die(...) { fprintf(stderr, __VA_ARGS__); return -1; }
 
 int main(int argc, char** argv) {
 	if (argc < 4) die(
@@ -223,14 +222,17 @@ int main(int argc, char** argv) {
 	if (chdir(argv[DIRECTORY]))
 		die("Could not change directory to %s\n", argv[1]);
 
-	if (chroot(".")) die("Could not set root dir\n", cwd);
+	if (chroot(".")) die("Could not set root dir\n");
 
 	int uid = atoi(argv[NEW_UID]);
 
-	if (setuid(uid))
-		die("Could not set uid to %d\n", uid);
+	if (uid == 0) die("Refusing to run as root");
 
-	char** child_argv = malloc(sizeof(char*) * (argc - REQ_ARGS + 1));
+	if (setuid(uid)) die("Could not set uid to %d\n", uid);
+
+	char** child_argv = malloc(
+		sizeof(char*) * (argc - REQ_ARGS + 1)
+	);
 	child_argv[0] = argv[PROGRAM_NAME];
 	int i;
 	for (i = 1; i < argc - REQ_ARGS; i++) {
@@ -244,7 +246,33 @@ int main(int argc, char** argv) {
 	execve(argv[PROGRAM_NAME], child_argv, 0);
 	die("execve returned (failed) errno: %d\n", errno);
 }
-\end{lstlisting}
+\end{minted}
+
+Viktigt att notera är att programmet inte tillåter att köra program med
+användar-id:t \texttt{0}, vilket alltid är användar-id:t för användaren root. Om
+detta tilläts skulle en potentiell hackare som på något sätt fått tillgång till
+att exekvera detta program exempelvis kunna exekvera det med argumenten
+\texttt{/ 0 /bin/sh}. Detta skulle restriktera programmet \texttt{/bin/sh}
+(en kommandoprompt) till mappen \texttt{/} (vilket är filsystemets rot och
+inkluderar därmed hela systemet) och köra det som användaren root.
+
+Detta skulle ge hackaren fri tillgång till att köra vad som än behagar denna med
+servern.
+
+Däremot är det fortfarande möjligt att göra detsamma med vilken annan användare
+som helst på servern. Därför bör detta program tillhöra en grupp vars enda
+medlem är användaren som måste exekvera programmet och sedan markeras som ej
+exekverbart av andra.
+
+För att åstadkomma detta samt det som tidigare beskrevs om \textit{setuid}-biten
+används följande kommandon:
+
+\texttt{sudo chown root:judge-master executor}
+
+\texttt{sudo chmod 4750 executor}
+\\
+\textit{judge-master} är namnet på gruppen och den skapas automatiskt vid
+skapandet av en användare med samma namn.
 
 \subsection{Isolering från kommunikation via internet}
 
@@ -271,12 +299,12 @@ ingående trafik förutom på en port, vilken skulle vara upptagen med annan
 trafik och därmed även den blockerad. Detta kan åstadkommas med följande
 kommandon:
 
-\texttt{iptables -A OUTPUT -j DROP}
+\begin{minted}{sh}
+iptables -A OUTPUT -j DROP
+iptables -A INPUT --dport 48753 -j ALLOW
+iptables -A INPUT -j DROP
+\end{minted}
 
-\texttt{iptables -A INPUT --dport 48753 -j ALLOW}
-
-\texttt{iptables -A INPUT -j DROP}
-\\
 Detta blockerar all trafik som ska blockeras. Men den första raden blockerar
 inte bara alla nya anslutningar utåt, utan \textbf{all utgående trafik} och
 hindrar därmed containern från att rapportera tillbaka några resultat.
@@ -287,30 +315,279 @@ syfte är att exekvera användares program. Det är alltså \textit{judge-instan
 användar-id som skickas in till \hyperlink{executor}{executor}.
 Detta id kan framtas med kommandot:
 
-\texttt{id -u judge-instance}
-\\
+\mint{sh}|id -u judge-instance|
+
 Slutligen blockeras den nya användaren från att komma åt internet med följande
 kommandon:
 
-\texttt{iptables -A OUTPUT -m owner --uid-owner judge-instance -j DROP}
-\\
+\mint{sh}|iptables -A OUTPUT -m owner --uid-owner judge-instance -j DROP|
+
 Brandväggen kommer därmed blockera all utgående trafik från användarinlämnade
 program.
 
 \subsection{Domarsystem}
 
+\subsubsection{Programmeringsspråk}
+
 För att kontinuerligt och automatiskt kunna ta emot och verifiera korrektheten
 hos användares program utvecklades sedan en ``domare''. Domaren är gjord i
-programmeringsspråket \href{https://rust-lang.org}{Rust}, tack vare den
-hårdvarunära kontrollen språket ger tillgång till, samtidigt som språket ger
-utvecklaren tillgång till bekväma funktionaliteter som oftast hittas bland språk
-av "högre nivå" som exempelvis Haskell och Javascript. Dessutom har Rust ett
-välfungerande och lättanvänt byggsystem som automatiskt laddar ner och
-kompilerar bibliotek som används.
+programmeringsspråket \href{https://rust-lang.org}{Rust}. Detta språk valdes på
+grund av:
 
-\subsection{web-api}
+\begin{itemize}
+	\item Den hårdvarunära kontrollen språket ger tillgång till. Exempelvis har
+		utvecklaren full kontroll över hur och när minne allokeras och frigörs,
+		samt möjligheten att skapa trådar på operativsystem-nivå.
+	\item Tillgången till bekväma funktionaliteter som oftast hittas i språk av
+		"högre nivå" som exempelvis Haskell och Javascript. Ett exempel på detta
+		är lata iteratorer.
+	\item Rusts välfungerande och lättanvända byggsystem som som automatiskt
+		laddar ner och kompilerar bibliotek som används av applikationen, samt
+		det stora antalet bibliotek som finns tillgängligt via rusts
+		bibliotekssamling på \href{https://crates.io}{crates.io}.
+	\item Program skrivna i Rust (vanligtvis och i detta projekt) kompileras
+		till en enda fil i maskinkod som kan exekveras direkt, utan en körmotor
+		eller interpreterare.
+	\item Rusts strikta typsystem tvingar utvecklaren att explicit hantera fel
+		och situationer där man \textit{kanske} har ett värde. Därmed slipper
+		utvecklaren felsöka fall av \textit{Segfault} (som i C/C++) eller
+		\textit{NullPointerException} (som i Java).
+\end{itemize}
 
-\subsection{frontend}
+\subsubsection{Kommunikation med domare}
+
+Kommunikationsmetoden som valdes är att domaren skapar en \textit{TCP-socket}
+där den lyssnar på anslutningar. Den skulle kunna ta emot fler anslutningar, men
+endast en i taget. Därmed krävs ej att domaren startas om när webbservern som
+ansluter till den (vilken beskrivs i sektion \ref{webbserver}) gör det. Däremot
+krävs ej flera anslutningar samtidigt eftersom endast en webbserver körs.
+
+Dataformatet som valdes är JSON, främst för att det är lätt att jobba med. Både
+för hand, i Rust, tack vare biblioteket \textit{serde\_json}, och i JavaScript,
+som webbservern valdes att implementeras i.
+
+Varje förfrågning om ett användarinlämnat program skulle vara ett ett eget
+JSON-objekt innehållande programmets källkod, språk, samt väsentlig information
+om problemet programmet i fråga är gjort att lösa. Dessa JSON-objekt som skickas
+separeras på enskilda rader för att enkelt kunna dela upp dem och avgöra när ett
+meddelande är slut.
+
+\subsubsection{Ta emot anslutningar}
+
+Det första som implementerades var domarens förmåga att ta emot förfrågningar om
+program att köra.
+
+\begin{listing}[H]
+	\caption{Main-funktionen}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		use std::io;
+		use std::net::TcpListener;
+
+		fn main() -> Result<(), io::Error> {
+			let listener = TcpListener::bind("0.0.0.0:48753")?;
+
+			// ...
+
+			Ok(())
+		}
+	\end{minted}
+\end{listing}
+
+Först deklareras att modulen \texttt{io} och datastrukturen
+\texttt{TcpListener} från bibioteket \texttt{std} (Rusts standardbibliotek) och
+modulen \texttt{net} används. Dessa går då att referera till
+direkt, istället för att skriva \texttt{std::io} och
+\texttt{std::net::TcpListener} varje gång.
+
+Mainfunktionen deklareras och dess returtyp är
+\mintinline{rust}|Result<(), io::Error>|, vilket innebär \texttt{()} vid en
+lyckad körning och \texttt{io::Error} vid en misslyckad. \texttt{()} är i Rust
+ingenting, vilket ofta benämns \textcolor{blue}{\texttt{void}} i C-inspirerade
+språk. \texttt{io::Error} är innehåller information om vad som gått fel, vilket
+i det här fallet är om det inte går att binda TCP-socketen eller om strängen som
+skickas till \texttt{bind}-funktionen skulle vara inkorrekt formaterad.
+
+Sedan deklareras variabeln \texttt{listener}. Funktionen \texttt{bind}, som
+finns i datastrukturen \texttt{TcpListener} försöker skapa en TCP-socket och
+binder den till att lyssna på en viss port och adress. Funktionens returtyp är
+\\ \mintinline{rust}|Result<TcpListener, io::Error>| och om allt går väl returneras
+TCP-socketen, annars felet. Frågetecknet efter funktionsanropet kommer
+automatiskt returnera från \texttt{main}-funktionen med ett fel från
+\texttt{bind} om ett sådant uppstår, och i annat fall sätta in värdet i
+\texttt{listener}. Fast att datatypen av \texttt{listener} inte explicit
+deklareras är den fast och kan inte ändras. Rusts kompilator analyserar koden
+och antyder att typen måste vara \texttt{TcpListener}.
+
+En \texttt{TcpListener} i Rust är en TCP-socket som lyssnar på anslutningar.
+Utöver det finns även \texttt{TcpStream}, vilket är en TCP-socket som
+representerar en redan öppen anslutning till en TCP-socket, möjligtvis på en
+annan dator.
+
+Till sist returneras \mintinline{rust}|Ok(())| från \texttt{main} för att visa
+att inget gått fel.
+
+\subsubsection{Hantera anslutningar}
+
+\paragraph{Iterera över anslutningar}
+
+Alla anslutningar itereras över och hanteras i en separat funktion.
+
+\begin{listing}[H]
+	\caption{Itererar över alla anslutningar}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		while let Ok((socket, _addr)) = listener.accept() {
+			handle_connection(socket);
+		}
+	\end{minted}
+\end{listing}
+
+While-let-loopen körs så länge som \mintinline{rust}|Ok((socket, _addr))|
+``matchar'' returvärdet av \texttt{listener.accept()}. När någonting skapar en
+anslutning till \texttt{listener} returnerar metoden \texttt{accept} en
+\texttt{TcpStream} och en \texttt{SocketAddr}.
+
+\texttt{TcpStream}en används för att kommunicera med med andra sidan av
+anslutningen och \texttt{SocketAddr} beskriver varifrån anslutningen kommer.
+
+Adressen är i det här fallet ointressant och understrecket i början av
+variabelnamnet betecknar att variabeln medvetet inte används. Om och när
+\texttt{accept} returnerar ett fel avslutas loopen och programmet stängs av.
+
+\paragraph{Hantering av enskild anslutning}
+
+\begin{listing}[H]
+	\caption{Funktionen som hanterar anslutningar}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		fn handle_connection(mut socket: TcpStream) {
+			// ...
+		}
+	\end{minted}
+\end{listing}
+
+Funktionen \texttt{handle\_connection} tar in en \texttt{TcpStream} som en
+parameter och har inget returvärde. Socketen döps till \texttt{socket} och
+\texttt{mut} markerar parametern som ``föränderig'', vilket krävs för att kunna
+skicka data med den.
+
+\begin{listing}[H]
+	\caption{Itererar över raderna som skickas till socketen}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let reader = BufReader::new(socket.try_clone().unwrap());
+
+		for line in reader.lines().filter_map(|line| line.ok()) {
+			// ...
+		}
+	\end{minted}
+\end{listing}
+
+I funktionen skapas först en \texttt{BufReader}, som används för att lätt
+hantera datan som tas emot rad för rad. Till konstruktorn skickas en kopia av
+\texttt{socket}, som kopieras med \texttt{try\_clone}. I det otroliga fallet att
+datorn inte klarar av att skapa fler sockets kan detta misslyckas. Här ignoreras
+detta fall och \texttt{unwrap} används för att ta ut värdet. Om kopieringen ändå
+skulle misslyckas stängs av programmet och visar ett felmeddelande.
+
+Socketen måste kopieras eftersom Rust endast tillåter att variabler skrivs till
+på ett enda ställe, eller läses på ett eller fler ställen samtidigt. Enligt
+programmet här har två sockets skapats, men enligt operativsystem finns
+fortfarande bara en och dessa två kopior är sammankopplade.
+
+Sedan anropas metoden \texttt{lines} som returnerar en \textit{iterator} över
+alla rader som tas emot. På denna anropas \texttt{filter\_map} med en anonym
+funktion som argument. Detta leder till att alla rader som inte kunde läsas
+korrekt filtreras bort. Detta bör endast förekomma om socketen oväntat stängs
+ner eller om datan som tas emot inte är giltig unicode.
+
+For-loopen itererar automatiskt över raderna och lägger dem i variabeln
+\texttt{line}. När socketen stängs ner från andra änden kommer for-loopen lämnas
+och \texttt{handle\_connection} returnerar.
+
+\paragraph{Hantering av enskilt meddelande}
+
+I for-loopen används biblioteken \textit{serde\_json} och dess funktion
+\texttt{from\_str} för att konvertera meddelandet till datastrukturen
+\texttt{Submission}
+
+\begin{listing}[H]
+	\caption{Konvertering av meddelande}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let submission: Submission = match serde_json::from_str(&line) {
+			Ok(s) => s,
+			Err(err) => {
+				eprintln!("{}", line);
+				let _ = write!(
+					socket,
+					"{}\n",
+					json!({ "type": "error", "msg": format!("{}", err) })
+				);
+				continue;
+			}
+		};
+
+		// ...
+	\end{minted}
+\end{listing}
+
+För att få åtkomst till \textit{serde\_json} måste raden
+\mintinline{rust}|serde_json = "1.0"| läggas till under \texttt{[dependencies]} i
+filen \texttt{Cargo.toml}.
+
+Variabeln \texttt{submission} deklareras och ges här en datatyp explicit. Detta
+krävs för att \texttt{from\_str} kan returnera alla datatyper som är markerade
+som avserialiserbara via \texttt{Deserialize} från biblioteket \textit{serde}.
+
+Match-uttrycket här försöker ``matcha'' returvärdet av \texttt{from\_str} med \\
+\mintinline{rust}|Ok(s)| och \mintinline{rust}|Err(err)|. Om strängen
+som tagits emot var korrekt formaterad JSON och datastrukturen är en korrekt
+beskrivning av en \texttt{Submission} kommer \mintinline{rust}|Ok(s)|
+matcha. Då kommer \texttt{s} vara meddelandet som en \texttt{Submission} och
+\texttt{=> s} får match-uttrycket att evalueras till detta meddelande och därmed
+sätts variabeln \texttt{submission} till detta.
+
+Om det istället är något fel på meddelandet kommer \mintinline{rust}|Err(err)|
+matcha, i vilket fall meddelandet skrivs ut till konsolen, felmeddelandet från
+\texttt{from\_str} skickas tillbaka via socketen och programmet fortsätter med
+nästa meddelande.
+
+\begin{listing}[H]
+	\caption{Datastrukturen \texttt{Submission}}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		use serde::Deserialize;
+
+		#[derive(Deserialize)]
+		#[serde(rename_all = "camelCase")]
+		pub struct Submission {
+			id: u64,
+			lang: String,
+			source: String,
+			test_cases: TestCases,
+			time_limit: u128,
+			memory_limit: u128,
+		}
+	\end{minted}
+\end{listing}
+
+Datastrukturen \texttt{Submission} är markerad som avserialiserbar. För detta
+krävs raden \mintinline{rust}|serde = { version = "1", features = ["derive"] }|
+under \\ \texttt{[dependencies]} i \texttt{Cargo.toml}.
+
+Efter att \texttt{Submission}en tagits fram anropas dess metod \texttt{judge}.
+Denna använder datan i variabeln för att avgöra om användarens program är
+korrekt och skickar resultatet till socketen.
+
+\begin{listing}[H]
+	\caption{Inlämningen bedöms}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+        submission.judge(&mut socket);
+	\end{minted}
+\end{listing}
+
+\subsection{Webbapplikation}
+
+\subsubsection{Backend}
+\label{webbserver}
+
+\subsubsection{Front end}
 
 \section{Resultat}
 
