@@ -6,11 +6,15 @@
 
 \renewcommand*\contentsname{Innehållsförteckning}
 
+\usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{minted}
 \definecolor{codebg}{rgb}{0.97,0.97,0.97}
 
 \renewcommand\listingscaption{Kodavsnitt}
+\renewcommand\figurename{Bilaga}
+
+\newcommand{\coderef}[1]{\listingscaption~\ref{#1}}
 
 \usepackage[
 	pdfborder={0 0 0},
@@ -138,7 +142,7 @@ beräkningar på denna data. Inget av detta utgör säkerhetsrisker.
 För att förhindra användarens program från att komma åt filer på servern används
 syscallet \textit{chroot}. Ett syscall är en funktion som anropar
 operativsystemets kärna direkt. Chroot står för change root,
-\textit{ändra rot}, och dess effekt är att "på låtsas" ändra filsystemets rot
+\textit{ändra rot}, och dess effekt är att ``på låtsas'' ändra filsystemets rot
 för programmet som körs. På så sätt kan ett programs tillgång till filsystemet
 begränsas till en viss mapp, vari hur stor eller liten del av det övriga
 filsystemets som än önskas kan tillgängliggöras. Den stora fördelen med denna
@@ -173,11 +177,12 @@ root. För att åstadkomma detta används syscallet \textit{setuid}, som låter
 programmet ändra vilken användare det körs som. Även detta syscall kräver att
 programmet från början körs som root, men det problemet är redan löst. För att
 sedan köra programmet används syscallet \textit{execve}, vars effekt är att
-"byta ut" det anropande programmet mot ett annat. In- och utmatningsströmmarna
+``byta ut'' det anropande programmet mot ett annat. In- och utmatningsströmmarna
 ärvs så kommunikation med användarens program fungerar på samma sätt som om man
 exekverade det direkt.
 
 \hypertarget{executor}{}
+\label{executor}
 
 För att implementera allt detta valdes under detta projekt att skapa kort
 program i språket C. Via programmets argument får det information om vilken mapp
@@ -192,60 +197,60 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 	bgcolor=codebg,
 	tabsize=4,
 ]{c}
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <dirent.h>
-#include <string.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <errno.h>
+	#include <dirent.h>
+	#include <string.h>
 
-// build:
-	// gcc -O3 -o executor executor.c
-	// strip executor
-	// sudo chown root:judge-master executor
-	// sudo chmod 4750 executor
+	// build:
+		// gcc -O3 -o executor executor.c
+		// strip executor
+		// sudo chown root:judge-master executor
+		// sudo chmod 4750 executor
 
-#define DIRECTORY 1
-#define NEW_UID 2
-#define PROGRAM_NAME 3
-#define REQ_ARGS 3
+	#define DIRECTORY 1
+	#define NEW_UID 2
+	#define PROGRAM_NAME 3
+	#define REQ_ARGS 3
 
-#define die(...) { fprintf(stderr, __VA_ARGS__); return -1; }
+	#define die(...) { fprintf(stderr, __VA_ARGS__); return -1; }
 
-int main(int argc, char** argv) {
-	if (argc < 4) die(
-		"Syntax: %s <dir> <uid> <program> <args...>\n",
-		argv[0]
-	);
-
-	if (chdir(argv[DIRECTORY]))
-		die("Could not change directory to %s\n", argv[1]);
-
-	if (chroot(".")) die("Could not set root dir\n");
-
-	int uid = atoi(argv[NEW_UID]);
-
-	if (uid == 0) die("Refusing to run as root");
-
-	if (setuid(uid)) die("Could not set uid to %d\n", uid);
-
-	char** child_argv = malloc(
-		sizeof(char*) * (argc - REQ_ARGS + 1)
-	);
-	child_argv[0] = argv[PROGRAM_NAME];
-	int i;
-	for (i = 1; i < argc - REQ_ARGS; i++) {
-		child_argv[i] = malloc(
-			sizeof (char) * (strlen(argv[i + REQ_ARGS]) + 1)
+	int main(int argc, char** argv) {
+		if (argc < 4) die(
+			"Syntax: %s <dir> <uid> <program> <args...>\n",
+			argv[0]
 		);
-		strcpy(child_argv[i], argv[i + REQ_ARGS]);
-	}
-	child_argv[i] = NULL;
 
-	execve(argv[PROGRAM_NAME], child_argv, 0);
-	die("execve returned (failed) errno: %d\n", errno);
-}
+		if (chdir(argv[DIRECTORY]))
+			die("Could not change directory to %s\n", argv[1]);
+
+		if (chroot(".")) die("Could not set root dir\n");
+
+		int uid = atoi(argv[NEW_UID]);
+
+		if (uid == 0) die("Refusing to run as root");
+
+		if (setuid(uid)) die("Could not set uid to %d\n", uid);
+
+		char** child_argv = malloc(
+			sizeof(char*) * (argc - REQ_ARGS + 1)
+		);
+		child_argv[0] = argv[PROGRAM_NAME];
+		int i;
+		for (i = 1; i < argc - REQ_ARGS; i++) {
+			child_argv[i] = malloc(
+				sizeof (char) * (strlen(argv[i + REQ_ARGS]) + 1)
+			);
+			strcpy(child_argv[i], argv[i + REQ_ARGS]);
+		}
+		child_argv[i] = NULL;
+
+		execve(argv[PROGRAM_NAME], child_argv, 0);
+		die("execve returned (failed) errno: %d\n", errno);
+	}
 \end{minted}
 
 Viktigt att notera är att programmet inte tillåter att köra program med
@@ -339,7 +344,7 @@ grund av:
 		utvecklaren full kontroll över hur och när minne allokeras och frigörs,
 		samt möjligheten att skapa trådar på operativsystem-nivå.
 	\item Tillgången till bekväma funktionaliteter som oftast hittas i språk av
-		"högre nivå" som exempelvis Haskell och Javascript. Ett exempel på detta
+		``högre nivå'' som exempelvis Haskell och Javascript. Ett exempel på detta
 		är lata iteratorer.
 	\item Rusts välfungerande och lättanvända byggsystem som som automatiskt
 		laddar ner och kompilerar bibliotek som används av applikationen, samt
@@ -378,7 +383,7 @@ Det första som implementerades var domarens förmåga att ta emot förfrågning
 program att köra.
 
 \begin{listing}[H]
-	\caption{Main-funktionen}
+	\caption{En TCP-socket skapas}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		use std::io;
 		use std::net::TcpListener;
@@ -393,42 +398,10 @@ program att köra.
 	\end{minted}
 \end{listing}
 
-Först deklareras att modulen \texttt{io} och datastrukturen
-\texttt{TcpListener} från bibioteket \texttt{std} (Rusts standardbibliotek) och
-modulen \texttt{net} används. Dessa går då att referera till
-direkt, istället för att skriva \texttt{std::io} och
-\texttt{std::net::TcpListener} varje gång.
-
-Mainfunktionen deklareras och dess returtyp är
-\mintinline{rust}|Result<(), io::Error>|, vilket innebär \texttt{()} vid en
-lyckad körning och \texttt{io::Error} vid en misslyckad. \texttt{()} är i Rust
-ingenting, vilket ofta benämns \textcolor{blue}{\texttt{void}} i C-inspirerade
-språk. \texttt{io::Error} är innehåller information om vad som gått fel, vilket
-i det här fallet är om det inte går att binda TCP-socketen eller om strängen som
-skickas till \texttt{bind}-funktionen skulle vara inkorrekt formaterad.
-
-Sedan deklareras variabeln \texttt{listener}. Funktionen \texttt{bind}, som
-finns i datastrukturen \texttt{TcpListener} försöker skapa en TCP-socket och
-binder den till att lyssna på en viss port och adress. Funktionens returtyp är
-\\ \mintinline{rust}|Result<TcpListener, io::Error>| och om allt går väl returneras
-TCP-socketen, annars felet. Frågetecknet efter funktionsanropet kommer
-automatiskt returnera från \texttt{main}-funktionen med ett fel från
-\texttt{bind} om ett sådant uppstår, och i annat fall sätta in värdet i
-\texttt{listener}. Fast att datatypen av \texttt{listener} inte explicit
-deklareras är den fast och kan inte ändras. Rusts kompilator analyserar koden
-och antyder att typen måste vara \texttt{TcpListener}.
-
-En \texttt{TcpListener} i Rust är en TCP-socket som lyssnar på anslutningar.
-Utöver det finns även \texttt{TcpStream}, vilket är en TCP-socket som
-representerar en redan öppen anslutning till en TCP-socket, möjligtvis på en
-annan dator.
-
-Till sist returneras \mintinline{rust}|Ok(())| från \texttt{main} för att visa
-att inget gått fel.
+Mainfunktionen skapar först en TCP-socket och binder den till att lyssna på
+inkommande anslutningar.
 
 \subsubsection{Hantera anslutningar}
-
-\paragraph{Iterera över anslutningar}
 
 Alla anslutningar itereras över och hanteras i en separat funktion.
 
@@ -441,72 +414,34 @@ Alla anslutningar itereras över och hanteras i en separat funktion.
 	\end{minted}
 \end{listing}
 
-While-let-loopen körs så länge som \mintinline{rust}|Ok((socket, _addr))|
-``matchar'' returvärdet av \texttt{listener.accept()}. När någonting skapar en
-anslutning till \texttt{listener} returnerar metoden \texttt{accept} en
-\texttt{TcpStream} och en \texttt{SocketAddr}.
+While-let-loopen itererar över alla inkommande anslutningar.  Adressen till den
+anslutande klienten är i det här fallet ointressant, men socketen som är
+ansluten till klienten skickas in till funktionen \texttt{handle\_connection}.
+(Klienten är i det här fallet webbservern.)
 
-\texttt{TcpStream}en används för att kommunicera med med andra sidan av
-anslutningen och \texttt{SocketAddr} beskriver varifrån anslutningen kommer.
-
-Adressen är i det här fallet ointressant och understrecket i början av
-variabelnamnet betecknar att variabeln medvetet inte används. Om och när
-\texttt{accept} returnerar ett fel avslutas loopen och programmet stängs av.
-
-\paragraph{Hantering av enskild anslutning}
+\texttt{handle\_connection} använder en \texttt{BufReader} och dess metod
+\texttt{lines} för att iterera över varje textrad av data som tagits emot.
 
 \begin{listing}[H]
 	\caption{Funktionen som hanterar anslutningar}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		fn handle_connection(mut socket: TcpStream) {
-			// ...
+			let reader = BufReader::new(socket.try_clone().unwrap());
+
+			for line in reader.lines().filter_map(|line| line.ok()) {
+				// ...
+			}
 		}
 	\end{minted}
 \end{listing}
 
-Funktionen \texttt{handle\_connection} tar in en \texttt{TcpStream} som en
-parameter och har inget returvärde. Socketen döps till \texttt{socket} och
-\texttt{mut} markerar parametern som ``föränderig'', vilket krävs för att kunna
-skicka data med den.
-
-\begin{listing}[H]
-	\caption{Itererar över raderna som skickas till socketen}
-	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
-		let reader = BufReader::new(socket.try_clone().unwrap());
-
-		for line in reader.lines().filter_map(|line| line.ok()) {
-			// ...
-		}
-	\end{minted}
-\end{listing}
-
-I funktionen skapas först en \texttt{BufReader}, som används för att lätt
-hantera datan som tas emot rad för rad. Till konstruktorn skickas en kopia av
-\texttt{socket}, som kopieras med \texttt{try\_clone}. I det otroliga fallet att
-datorn inte klarar av att skapa fler sockets kan detta misslyckas. Här ignoreras
-detta fall och \texttt{unwrap} används för att ta ut värdet. Om kopieringen ändå
-skulle misslyckas stängs av programmet och visar ett felmeddelande.
-
-Socketen måste kopieras eftersom Rust endast tillåter att variabler skrivs till
-på ett enda ställe, eller läses på ett eller fler ställen samtidigt. Enligt
-programmet här har två sockets skapats, men enligt operativsystem finns
-fortfarande bara en och dessa två kopior är sammankopplade.
-
-Sedan anropas metoden \texttt{lines} som returnerar en \textit{iterator} över
-alla rader som tas emot. På denna anropas \texttt{filter\_map} med en anonym
-funktion som argument. Detta leder till att alla rader som inte kunde läsas
-korrekt filtreras bort. Detta bör endast förekomma om socketen oväntat stängs
-ner eller om datan som tas emot inte är giltig unicode.
-
-For-loopen itererar automatiskt över raderna och lägger dem i variabeln
-\texttt{line}. När socketen stängs ner från andra änden kommer for-loopen lämnas
-och \texttt{handle\_connection} returnerar.
-
-\paragraph{Hantering av enskilt meddelande}
+\subsubsection{Hantera meddelanden}
 
 I for-loopen används biblioteken \textit{serde\_json} och dess funktion
 \texttt{from\_str} för att konvertera meddelandet till datastrukturen
-\texttt{Submission}
+\texttt{Submission}, en inlämning. Om detta inte går skrivs meddelandet ut till
+konsollen för lättare felsökning och ett felmeddelande skickas tillbaka i
+socketen.
 
 \begin{listing}[H]
 	\caption{Konvertering av meddelande}
@@ -528,26 +463,9 @@ I for-loopen används biblioteken \textit{serde\_json} och dess funktion
 	\end{minted}
 \end{listing}
 
-För att få åtkomst till \textit{serde\_json} måste raden
-\mintinline{rust}|serde_json = "1.0"| läggas till under \texttt{[dependencies]} i
-filen \texttt{Cargo.toml}.
-
-Variabeln \texttt{submission} deklareras och ges här en datatyp explicit. Detta
-krävs för att \texttt{from\_str} kan returnera alla datatyper som är markerade
-som avserialiserbara via \texttt{Deserialize} från biblioteket \textit{serde}.
-
-Match-uttrycket här försöker ``matcha'' returvärdet av \texttt{from\_str} med \\
-\mintinline{rust}|Ok(s)| och \mintinline{rust}|Err(err)|. Om strängen
-som tagits emot var korrekt formaterad JSON och datastrukturen är en korrekt
-beskrivning av en \texttt{Submission} kommer \mintinline{rust}|Ok(s)|
-matcha. Då kommer \texttt{s} vara meddelandet som en \texttt{Submission} och
-\texttt{=> s} får match-uttrycket att evalueras till detta meddelande och därmed
-sätts variabeln \texttt{submission} till detta.
-
-Om det istället är något fel på meddelandet kommer \mintinline{rust}|Err(err)|
-matcha, i vilket fall meddelandet skrivs ut till konsolen, felmeddelandet från
-\texttt{from\_str} skickas tillbaka via socketen och programmet fortsätter med
-nästa meddelande.
+Datastrukturen \texttt{Submission} är avserialiserbar och innehåller information
+om användarens program och problemet, dessutom har varje inlämning ett eget
+id-nummer.
 
 \begin{listing}[H]
 	\caption{Datastrukturen \texttt{Submission}}
@@ -560,34 +478,646 @@ nästa meddelande.
 			id: u64,
 			lang: String,
 			source: String,
-			test_cases: TestCases,
+			test_cases: Vec<(String, String)>,
 			time_limit: u128,
 			memory_limit: u128,
 		}
 	\end{minted}
 \end{listing}
 
-Datastrukturen \texttt{Submission} är markerad som avserialiserbar. För detta
-krävs raden \mintinline{rust}|serde = { version = "1", features = ["derive"] }|
-under \\ \texttt{[dependencies]} i \texttt{Cargo.toml}.
-
-Efter att \texttt{Submission}en tagits fram anropas dess metod \texttt{judge}.
-Denna använder datan i variabeln för att avgöra om användarens program är
-korrekt och skickar resultatet till socketen.
+Efter att inlämningen tagits fram anropas dess metod \texttt{judge}, som avgör
+om användarens program är korrekt och skickar resultatet till socketen.
 
 \begin{listing}[H]
-	\caption{Inlämningen bedöms}
+	\caption{Inlämningen bedöms \label{call-judge}}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
         submission.judge(&mut socket);
 	\end{minted}
 \end{listing}
 
+\subsubsection{Bedömning av inlämningar}
+
+För att bedöma om programmet är korrekt och tillräckligt snabbt körs det med
+vissa specifika testdata (sparade i \texttt{test\_cases}) och kontrolleras
+att rätt utdata ges tillbaka. För att detta ska göras säkert används en
+``sandlåda'', vars uppgift är att stänga in användarens program och endast låta
+det läsa in och mata ut data, samt utföra operationer och algoritmer med denna
+och förprogrammerad data.
+
+Först instansieras en sandlåda, sedan körs programmet med alla testfall i
+ordning, tills att de tar slut, användarens program misslyckas, eller domaren
+stöter på ett problem.
+
+\begin{listing}[H]
+	\caption{Skelett av metoden \texttt{judge}\label{judge-method}}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		impl Submission {
+			pub fn judge(&self, socket: &mut TcpStream) {
+				let sandbox = match Sandbox::new(
+					&self.lang,
+					&self.source
+				) {
+					Ok(s) => s,
+					// ...
+				}
+
+				for (i, (input, output)) in self
+					.test_cases.iter().enumerate()
+				{
+					match sandbox.run_test_case(
+						input,
+						output,
+						self.time_limit,
+					) {
+						Ok((Status::Accepted, time)) => {
+							// ...
+						}
+						Ok((status, time)) => {
+							// ...
+							break;
+						}
+						Err(_) => {
+							// ...
+							break;
+						}
+					}
+				}
+			}
+		}
+	\end{minted}
+\end{listing}
+
+Nedan följer ett skelett av datastrukturen för en sandlåda.
+
+\begin{listing}[H]
+	\caption{Datastrukturen \texttt{Sandbox}}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		#[derive(Debug)]
+		pub struct Sandbox {
+			dir: PathBuf,
+			lang: String,
+		}
+
+		impl Sandbox {
+			pub fn new(lang: &str, source: &str) -> Result<Self, Error> {
+				// ...
+			}
+			pub fn run_test_case(
+				&self,
+				input: &str,
+				correct_output: &str,
+				time_limit: u128,
+			) -> Result<(Status, Option<u128>), Error> {
+				// ...
+			}
+		}
+	\end{minted}
+\end{listing}
+
+I konstruktorn skapas först en temporär mapp. Denna mapp placeras i systemets
+mapp för temporära filer.
+
+\begin{listing}[H]
+	\caption{En temporär mapp skapas}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let dir = env::temp_dir().join(
+			format!("beetle-sandbox-{}", random_suffix)
+		);
+		fs::create_dir(&path)?;
+
+		// ...
+	\end{minted}
+\end{listing}
+
+Sedan kopieras nödvändiga filer in. Dessa filer hämtas från från en
+konfigurationsfil och varierar beroende på vilket språk användarens program är
+skrivet i.
+
+\begin{listing}[H]
+	\caption{Nödvändiga filer kopieras in}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		for dependency in &language_dependencies {
+			let src = PathBuf::from(dependency);
+			let dst = dir.join(
+				src.strip_prefix("/").unwrap_or(&src)
+			);
+			fs::create_dir_all(dst.parent()?)?;
+			fs::copy(&src, &dst)?;
+		}
+
+		// ...
+	\end{minted}
+\end{listing}
+
+Användarens program sparas i mappen och kompileras.
+
+\begin{listing}[H]
+	\caption{Användarens program sparas och kompileras}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let src_file = dir.join(source_file_name);
+		fs::write(src_file, &source)?;
+
+		let result = Command::new(compiler_command)
+			.current_dir(dir.as_os_str())
+			.args(compiler_args)
+			.output()?;
+
+		if result.status.success() {
+			Ok(Sandbox {
+				dir,
+				lang: lang.to_string(),
+			})
+		} else {
+			Err(Error::CompilationError(
+				comp_out.status.code().unwrap_or(0),
+				comp_out.stderr,
+			))
+		}
+	\end{minted}
+\end{listing}
+
+När sedan användarens program körs, i metoden \texttt{run\_test\_case}, används
+\textit{executor} (se sektion \ref{executor}). Sandlådans mapp används som rot
+för filsystemet. Därmed får användaren endast tillgång till vad som är
+nödvändigt. Id:t för användaren \textit{judge-instance} hämtas från en
+konfigurationsfil.
+
+Programmet startas, tiden sparas
+och testfallets indata skrivs till programmet.
+
+\begin{listing}[H]
+	\caption{Användarens program startas}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let mut child = Command::new("./executor")
+			.arg(self.dir.as_os_str())
+			.arg(judge_instance_uid)
+			.arg(compiler_program_name)
+			.stdout(Stdio::piped())
+			.stdin(Stdio::piped())
+			.spawn()?;
+
+		let start_time = time::Instant::now();
+
+		child
+			.stdin
+			.as_mut()?
+			.write_all(&test_case_input)?;
+
+		// ...
+	\end{minted}
+\end{listing}
+
+Sedan inväntar domaren att användarens program körs färdigt och stänger ner sig
+självt, eller att den max tillåtna tiden tar slut. Funktionen
+\texttt{yield\_now} används för att förhindra att loopen körs för fort och tar
+upp processorns tid och kraft.
+
+\begin{listing}[H]
+	\caption{Användarens program låts köras}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let mut elapsed;
+		let status = loop {
+			let maybe_status = child.try_wait()?;
+			elapsed = start_time.elapsed().as_millis();
+
+			if elapsed > time_limit {
+				child.kill();
+				return Ok((Status::TimeLimitExceeded, Some(elapsed)));
+			}
+
+			if let Some(status) = maybe_status {
+				break status;
+			}
+			thread::yield_now();
+		};
+	\end{minted}
+\end{listing}
+
+När programmet körts klart kontrolleras att programmet inte kraschat samt att
+det skrivit ut rätt svar.
+
+\begin{listing}[H]
+	\caption{Användarens programs utdata kontrolleras}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		if !status.success() {
+			return Ok((Status::RuntimeError, Some(elapsed)));
+		}
+
+		let output: Vec<u8> = child
+			.stdout?
+			.bytes()
+			.filter_map(|b| b.ok())
+			.collect();
+
+		if output == correct_output.as_bytes() {
+			Ok((Status::Accepted, Some(elapsed)))
+		} else {
+			Ok((Status::WrongAnswer, Some(elapsed)))
+		}
+	\end{minted}
+\end{listing}
+
+När sandlådan använts klart och frigörs ur mitten körs dess destruktor. För att
+inte fylla upp servern med dessa mappar tas de bort i destruktorn. Om detta
+skulle misslyckas skrivs ett felmeddelande ut till konsolen så att detta kan
+utföras manuellt.
+
+\begin{listing}[H]
+	\caption{Sandlådans destruktor rensar upp efter sig}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		impl Drop for Sandbox {
+			fn drop(&mut self) {
+				if let Err(err) = fs::remove_dir_all(&self.dir) {
+					eprintln!(
+						"Could not remove sandbox dir {:?}:\n{:?}",
+						self.dir,
+						err,
+					);
+				};
+			}
+		}
+	\end{minted}
+\end{listing}
+
+\subsubsection{Återsändning av resultat}
+
+Slutligen skickas resultatet tillbaka via socketen som skickade förfrågan. För
+att förhindra buggar på grund av stavfel skapades en datastruktur som beskriver
+ett ``svar'' från domaren.
+
+\begin{listing}[H]
+	\caption{Datastrukturen \texttt{Response} beskriver ett svar från domaren}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		#[derive(Serialize)]
+		#[serde(rename_all = "camelCase")]
+		struct Response {
+			id: u64,
+			test_cases_suceeded: usize,
+			status: Status,
+			max_time: Option<u128>,
+		}
+	\end{minted}
+\end{listing}
+
+Svarets ``status'' beskriver hur bedömningen gått. Med \texttt{Pending} menas
+att bedömning fortfarande är igång. \texttt{JudgeError} betyder att något gått
+fel hos domaren. De andra bör beskriva sig själva.
+
+\begin{listing}[H]
+	\caption{Datastrukturen \texttt{Response} beskriver ett svar från domaren}
+	\label{status-enum}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		#[derive(Serialize, PartialEq)]
+		#[serde(rename_all = "camelCase")]
+		pub enum Status {
+			Pending,
+			Accepted,
+			JudgeError,
+			WrongAnswer,
+			RuntimeError,
+			CompilationError,
+			TimeLimitExceeded,
+		}
+	\end{minted}
+\end{listing}
+
+Efter varje resultat från \texttt{run\_test\_case} körs någon av armarna i
+match-uttrycket i \coderef{judge-method}. Vid ett lyckat resultat (då
+\texttt{status} är \texttt{Status::Accepted}) och det ännu finns testfall kvar
+att köras meddelas detta via socketen och \texttt{run\_test\_case} anropas igen
+i nästa iteration av for-loopen.
+
+\begin{listing}[H]
+	\caption{Resultaten från \texttt{run\_test\_case} meddelas kontinuerligt}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		Ok((Status::Accepted, time)) => {
+			write!(
+				socket,
+				"{}\n",
+				serde_json::ser::to_string(&Response {
+					id: self.id,
+					status: Status::Pending,
+					test_cases_suceeded: i + 1,
+					max_time: Some(max_time),
+				})
+			)
+		}
+	\end{minted}
+\end{listing}
+
+\subsubsection{Flertrådning}
+
+Detta program är väldigt snabbt, men när en användares program testkörs kan
+detta i vanliga situationer ta uppemot tio sekunder. (En testkörning kan ofta ta
+nästan en sekund och ett problem kan rimligtvis har drygt tio testfall).
+
+Detta är väldigt långsamt och för att lösa detta implementerades en s.k.
+\textit{trådpool}. Programmets struktur blev då en \textit{huvudtråd} som tar
+emot förfrågningar och skickar dem vidare till de övriga.
+
+% snabb genomgång om vad en thread pool är?
+
+Samtidigt är det väldigt viktigt att inte försöka köra för många användares
+program samtidigt, eftersom detta skulle medge att användares programs
+körningstid skulle bero på hur många som skickas in och körs samtidigt.
+
+Därför bestämdes att antalet trådar i trådpoolen ska vara ett mindre än antalet
+kärnor i processorn. På så sätt blir en tråd ledig till webbservern (se
+sektion \ref{webbserver}) och domarens huvudtråd, medan resten används av
+användarnas program och att skicka tillbaka resultat till webbservern.
+
+Självklart används även processorns krafter till andra program på servern men
+denna lösning fungerar bra i de flesta fallen.
+
+Först utökas \texttt{main}funktionen så att den startar trådpoolen.
+
+\begin{listing}[H]
+	\caption{En trådpool skapas}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+		let pool = WorkerPool::new(num_cpus::get() - 1);
+	\end{minted}
+\end{listing}
+
+En referens till denna skickas med till \texttt{handle\_connection}. När en
+inlämning tagits emot anropas inte metoden \texttt{judge} direkt, utan den
+lämnas in till trådpoolen. \coderef{call-judge} byts alltså ut mot:
+
+\begin{listing}[H]
+	\caption{En inlämning skickas in till trådpoolen}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
+        let mut socket = socket.try_clone().unwrap();
+        pool.submit(move || submission.judge(&mut socket));
+	\end{minted}
+\end{listing}
+
+Implementationen av trådpoolen är dock ej relevant till denna rapport och
+utelämnas.
+
 \subsection{Webbapplikation}
 
-\subsubsection{Backend}
+\subsubsection{Funktion \& Struktur}
+
+När domaren utvecklats färdigt inleddes arbetet med att skapa en
+webbapplikation.
+
+Webbapplikationens uppgift är:
+
+\begin{itemize}
+	\item att vara ett gränssnitt användare interagerar med,
+	\item att lagra information om problem, användare, och deras inlämningar,
+	\item och att kommunicera med domaren.
+\end{itemize}
+
+För detta behövs en databas, en webbserver, samt en webbplats. Databasen
+skapades med MySQL, eftersom det var den enda sortens databas det fanns
+erfarenhet och kunskap inom.
+
+För implementationen av webbservern och och -platsen övervägdes det mellan två
+alternativ:
+
+\begin{enumerate}
+	\item ramverket \textit{Rocket}, skrivet i Rust, och
+	\item ramverket \textit{Sapper}, skrivet i JavaScript.
+\end{enumerate}
+
+Tanken var att underlätta utvecklingen genom att de tre stora delarna av
+projektet endast skulle skrivas på två olika programmeringsspråk. Webbplatsens
+kod för interaktiva delar planerades skriva i JavaScript, eftersom det enda
+andra riktiga alternativet är WebAssembly, vilket bedömdes ännu ej vara moget
+nog.
+
+Om Rocket hade valts hade dessutom webbservern och domaren kunnat slås ihop till
+ett enda program och ingen TCP-socket hade behövts däremellan.
+
+Trots detta valdes Sapper. Främst tack vare dess hastighet.
+
+\subsubsection{Databas}
+
+Databasstrukturen beskrevs på papper med ett databasschema. Se
+\figurename{}~\ref{dbschema}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{database-schema}
+	\caption{Databasstruktur}\label{dbschema}
+\end{figure}
+
+Sedan skapades denna struktur i en faktisk databas. Värt att notera är att
+``type'', tillhörande ``Votes on'', är en \textit{enumeration} med de möjliga
+värdena ``upp'' och ``ner''. ``status'', tillhörande ``Submits to'' motsvarar
+\texttt{Status} i \coderef{status-enum}.
+
+\subsubsection{Webbserver}
 \label{webbserver}
 
-\subsubsection{Front end}
+% låååååååååång mening
+
+Som tidigare nämnt valdes ramverket Sapper till att bygga webbservern. Sapper är
+speciellt i och med att all HTML genereras på servern när en användare först går
+in på sidan, men när något senare händer, som att användaren går till en annan
+del av sidan, uppdateras HTML:en med JavaScript i webbläsaren och ny data hämtas
+med AJAX om det behövs.
+
+\paragraph{Sessioner}
+
+För att webbapplikationen ska erbjuda en användarvänlig upplevelse bestämdes att
+spara en användares ``session'' efter att denna loggat in.
+
+För att åstadkomma detta på ett säkert sätt används oftast en ``sessionskaka''.
+I användarens webbläsare sparas ett unikt identifikationsnummer och på
+webbservern en tabell med dessa identifikationsnummer kopplade till data om det
+inloggade kontot.
+
+För att undvika att behöva spara detta i webbservern valdes istället att spara
+denna data i kakan. Men för att göra detta säker krypterades kakan med det
+symmetriska ``Feistelkryptot''. Detta gör det omöjligt för en illvillig
+användare att både läsa datan i kakan och försöka ändra datan i den så länge
+denne inte har tillgång till de hemliga nycklarna som används vid kryptering och
+avkryptering. Utöver själva datan krypteras även en slumpad uppsättning bytes
+och tiden vid kryptering. På detta sätt kan en session ``ta slut'' om användaren
+exempelvis lämnar datorn. Dessutom resulterar samma krypterade data i olika
+kakor olika gånger.
+
+Nedan följer funktionen som används för att kryptera kakorna.
+
+\begin{listing}[H]
+	\caption{Kryptering av kakor}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{js}
+		export function encrypt(token, keys, randSize) {
+			let rand = crypto.randomBytes(randSize);
+			let date = Date.now().toString();
+			let payload = Buffer.from(JSON.stringify(token));
+
+			let data = Buffer.concat([
+				rand,
+				Buffer.from(date),
+				Buffer.from([0]),
+				payload,
+			]);
+
+			if (data.length % 2)
+				data = Buffer.concat([data, Buffer.from([0])]);
+
+			let l = data.slice(0, data.length / 2);
+			let r = data.slice(data.length / 2, data.length);
+			for (let key of keys.slice(0, keys.length - 1)) {
+				let nl = r;
+				let f = crypto.createHash("sha512")
+					.update(Buffer.concat([Buffer.from(key), r]))
+					.digest();
+				let nr = l.map((byte, i) => byte ^ f[i % f.length]);
+				l = nl;
+				r = nr;
+			}
+
+			let f = crypto.createHash("sha512")
+				.update(Buffer.concat(
+					[Buffer.from(keys[keys.length - 1]), r]
+				))
+				.digest();
+			l = l.map((byte, i) => byte ^ f[i % f.length]);
+
+			return Buffer.concat([rand, l, r]).toString("hex");
+		}
+	\end{minted}
+\end{listing}
+
+Avkrypteringen fungerar likadant, fast bakvänt.
+
+\paragraph{Sapper \& rutter}
+
+I ett projekt gjort med Sapper placeras alla ändpunkter webbservern ska
+tillgängliggöra i separata filer. Beroende på vilka HTTP-förfrågningsmetoder som
+ska finnas tillgängliga på ändpunkten exporterar filen funktioner funktioner med
+motsvarande namn. (Alltså ``get'', ``post'', ``head'', osv). Ändpunkter ges
+filänden \texttt{.json.js}, men \texttt{.js} finns ej med i ändpunktens namn när
+klienten skickar en förfrågan.
+
+Om exempelvis filen \texttt{routes/foo/bar.json.js} exporterar funktionen
+\texttt{get} kan webbservern ta emot en \textit{get}-förfrågan på
+\texttt{/foo/bar.json}.
+
+Funktionerna anropas när någon skickar en HTTP-förfrågan till ändpunkten. I
+funktionerna tillgängliggörs två parametrar: \texttt{req} och \texttt{res}.
+\texttt{req} beskriver information om förfrågan som skickades och \texttt{res}
+används för att skicka tillbaka ett svar.
+
+% några specifika: login.json, 
+Nedan följer ett exemepl på en ändpunkt som implementerades i detta projekt.
+Filen heter \texttt{login.json.js} och definierar en ändpunkt som används för
+att logga in ett konto och därmed skapa en session.
+
+\begin{listing}[H]
+	\caption{Inloggningsändpunkten}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{js}
+		import bcrypt from "bcrypt";
+		import database from "../database";
+		import * as responses from "../responses";
+
+		export async function post(req, res) {
+			const { username, password } = req.body;
+
+			if (!username || !password)
+				return responses.missingParam(res, "username/password");
+
+			const result = await database.query(
+				"SELECT id, hash FROM account WHERE username = ?",
+				username,
+			);
+
+			if (result.length == 0)
+				return responses.invalid(res, "username");
+
+			const { id, hash } = result[0];
+
+			const correctPassword = await bcrypt.compare(password, hash);
+
+			if (!correctPassword)
+				return responses.invalid(res, "password");
+
+			req.token = { id };
+
+			res.send({ msg: "Logged in" });
+		}
+	\end{minted}
+\end{listing}
+
+Först kontrolleras att förfrågan är korrekt, alltså att både ett användarnamn
+och ett lösenord har skickats med. Sedan hämtas kontots unika
+identifikationsnummer och lösenordshash från databasen. Efter det kontrolleras
+att ett konto hittades och att lösenordet matchar med hashen i databasen. För
+detta används algoritmen \textit{bcrypt} från ett externt bibliotek.
+
+Slutligen sparas kontots identifikationsnummer i \texttt{req.token}. Detta
+kommer sedan automatisk krypteras och skickas med som en kaka innan servern
+svarar klienten.
+
+Ett annat exempel på ändpunkt är den där information om en specifik inlämning
+hämtas. Filen heter \texttt{index.json.js} och ligger i \\
+\texttt{routes/submissions/[submission]/}. Att rutten har en del med
+hakparanteser i sig leder till att ändpunkten blir dynamisk och
+\texttt{/submissions/<vad som helst>.json} kan anropas. Notera även att
+\texttt{/index} ej måste finnas med i förfrågan.
+
+\begin{listing}[H]
+	\caption{Inlämningshämtningsändpunkten}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4,linenos]{js}
+		import database from "../../../database";
+		import * as responses from "../../../responses";
+		import depthify from "../../../depthify";
+		import { langName } from "../../../judge";
+
+		export async function get(req, res) {
+			const { submission } = req.params;
+			const accountId = req.token ? req.token.id : -1;
+			const result = await database.query(
+				`SELECT
+					username AS "submitter.username",
+					full_name AS "submitter.fullName",
+					problem.short_name AS "problem.shortName",
+					problem.long_name AS "problem.longName",
+					public, timestamp, lang, source, status,
+					max_runtime_ms AS maxRuntime,
+					max_memory_mb AS maxMemory,
+					test_cases_succeeded AS "testCases.succeeded",
+					COUNT(test_case.id) AS "testCases.total",
+					account_id = ? AS requesterIsOwner
+				FROM submission, problem, account, test_case
+				WHERE submission.id = ?
+				AND submission.problem_id = problem.id
+				AND submission.account_id = account.id
+				AND test_case.problem_id = problem.id
+				GROUP BY submission.id`,
+				[accountId, submission]
+			);
+
+			if (result.length === 0) return res.status(404).send({
+				msg: "Unknown submission"
+			});
+
+			if (!(result[0].public || result[0].requesterIsOwner))
+				return res.status(403).send({
+					msg: "You dont have access to this submission"
+				});
+
+			result[0].lang = langName(result[0].lang);
+			res.send(depthify({ ...result[0] }));
+		}
+	\end{minted}
+\end{listing}
+
+Majoriteten är denna ändpunkt är ett SQL-query. Notera att
+\texttt{req.token.id} används. Detta är från början inte en del av förfrågan,
+eftersom klienten inte känner till sitt identifikationsnummer, utan ``sätts in''
+av en annan del funktion innan denna anropas.
+
+\subsubsection{Webbsida}
+
+% sapper & svelte -- connection
+% ajax/server rendered
+% samma kod kan köras på både server och klient
+% anledning till val: bind:<sak>={<var>}
+% kort snutt av exemepel
 
 \section{Resultat}
 
@@ -596,5 +1126,7 @@ korrekt och skickar resultatet till socketen.
 \section{Referenser}
 
 \section{Bilagor}
+
+\listoffigures{}
 
 \end{document}
