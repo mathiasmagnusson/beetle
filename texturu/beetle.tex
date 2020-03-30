@@ -4,17 +4,21 @@
 \title{Lè gÿmñæŝíéàrḃêtë}
 \date{}
 
-\renewcommand*\contentsname{Innehållsförteckning}
-
+\usepackage{lipsum}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{minted}
+\usepackage{listings}
 \definecolor{codebg}{rgb}{0.97,0.97,0.97}
 
-\renewcommand\listingscaption{Kodavsnitt}
-\renewcommand\figurename{Bilaga}
+\renewcommand*\contentsname{Innehållsförteckning}
+\renewcommand*\listfigurename{Bilder}
+\renewcommand*\listoflistingscaption{Kodavsnitt}
 
-\newcommand{\coderef}[1]{\listingscaption~\ref{#1}}
+\renewcommand*\listingscaption{Kodavsnitt}
+\renewcommand*\figurename{Bilaga}
+
+\newcommand*\coderef[1]{\listingscaption~\ref{#1}}
 
 \usepackage[
 	pdfborder={0 0 0},
@@ -24,7 +28,7 @@
 ]{hyperref}
 
 \makeatletter
-\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+\renewcommand*\paragraph{\@startsection{paragraph}{4}{\z@}%
 			{-2.5ex\@plus -1ex \@minus -.25ex}%
 			{1.25ex \@plus .25ex}%
 			{\normalfont\normalsize\bfseries}}
@@ -38,7 +42,15 @@
 
 \section*{Abstract}
 
-Lets be very abstract about things here and speak the little English.
+\begin{par}
+
+\itshape
+This report describes some cool shit about programming and shit. That's pretty
+cool, innit? Well I must confess that it's time for me to sleep. I've drunk like
+four or five cups of coffee today btw. Now I'll leave you with some `Lorem
+ipsum' for the rest of this abstract. \lipsum[1-2]
+
+\end{par}
 
 \clearpage
 
@@ -52,22 +64,49 @@ Lets be very abstract about things here and speak the little English.
 
 Syftet med detta gymnasiearbete är att skapa en webbsida där användaren ska
 kunna öva på programmeringsproblemlösning och därmed få en förståelse för hur
-en säker webbserver skapas samt hur opålitlig kod kan exekveras på ett
-(relativt) säkert sätt.
+en säker webbserver skapas samt hur opålitlig kod kan exekveras på ett säkert
+sätt.
 
 \subsection{Bakgrund}
+
+Den första kända tävlingen inom programmeringsproblemlösning kallades ``First
+Annual Texas Collegiate Programming Championship'' (Competitive Programming,
+Wikipedia) och anordnades vid ``Texas A\&M University''. Då skrevs program på
+papper och slogs sedan in i hålkort för testkörning (International Collegiate
+Programming Context, Wikipedia).
+
+I Sverige har ``Programmeringsolympiaden'', en tävling för gymnasieelever,
+anordnats årligen sedan 1989. Denna är i sig en uttagning för det svenska laget
+till den internationella tävlingen ``International Olympiad in Informatics''.
+
+Dessa två, och åtskilligt många andra tävlingar använder sig utav onlineverktyg
+för att testköra och bedöma deltagarnas program.
+
+Många av dessa onlineverktyg, som \href{https://open.kattis.com}{kattis.com},
+och \href{https://codefoces.com}{codeforces.com}, har även samlingar med problem
+öppna för alla att försöka lösa när som helst. Dessutom låter dessa webbsidor
+användarna skicka in lösningar som då körs mot viss testdata för att avgöra om
+programmet löser uppgiften korrekt.
+
+Jag har själv ett intresse för tävlingsprogrammering och har deltagit i
+Programmeringsolympiadens final två gånger.
+% lagom skryt?
+
+Av denna anledning har jag valt att tillägna detta projekt till att skapa just
+en sådan webbsida. Alltså en sida för programmeringsproblemlösning som testkör
+användares program.
 
 \subsection{Rekommenderade kunskaper}
 
 För att till fullo förstå helheten av denna rapport eller åtminstone inför ett
-försök att efterlikna arbetet som här presenteras, är det rekommenderat att:
+försök att efterlikna arbetet som här presenteras, rekommenderas läsaren att:
 
 \begin{itemize}
-	\item ha grundläggande kunskaper om programmering,
+	\item ha grundläggande kunskaper om programmering samt
+		programmeringsrelaterade termer,
 	\item känna sig bekväm med datorer och användandet av en kommandotolk,
-	\item förstå översiktligt vad operativsystemet Linux är,
-	\item ha en grundläggande förståelse för en brandväggs uppgift,
-	\item samt ...
+	\item känna till vad en brandvägg är,
+	\item samt vara lika cool som Julius \verb|@^V^@|
 \end{itemize}
 
 \subsection{Frågeställningar}
@@ -98,6 +137,8 @@ försök att efterlikna arbetet som här presenteras, är det rekommenderat att:
 Mina bara händer och BIG BRAIN.
 
 \subsection{Avgränsningar}
+
+Inte mäter jag minnesallokering i alla fall.
 
 % \begin{itemize}
 % 	\item
@@ -178,8 +219,8 @@ programmet ändra vilken användare det körs som. Även detta syscall kräver a
 programmet från början körs som root, men det problemet är redan löst. För att
 sedan köra programmet används syscallet \textit{execve}, vars effekt är att
 ``byta ut'' det anropande programmet mot ett annat. In- och utmatningsströmmarna
-ärvs så kommunikation med användarens program fungerar på samma sätt som om man
-exekverade det direkt.
+ärvs så kommunikation med användarens program fungerar på samma sätt som om
+programmet exekverades direkt.
 
 \hypertarget{executor}{}
 \label{executor}
@@ -208,7 +249,7 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 	// build:
 		// gcc -O3 -o executor executor.c
 		// strip executor
-		// sudo chown root:judge-master executor
+		// sudo chown root:judge-daemon executor
 		// sudo chmod 4750 executor
 
 	#define DIRECTORY 1
@@ -254,11 +295,15 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 \end{minted}
 
 Viktigt att notera är att programmet inte tillåter att köra program med
-användar-id:t \texttt{0}, vilket alltid är användar-id:t för användaren root. Om
+användar-id:t \mintinline[bgcolor=codebg]{sh}|0|, vilket alltid är användar-id:t för användaren root. Om
 detta tilläts skulle en potentiell hackare som på något sätt fått tillgång till
 att exekvera detta program exempelvis kunna exekvera det med argumenten
-\texttt{/ 0 /bin/sh}. Detta skulle restriktera programmet \texttt{/bin/sh}
-(en kommandoprompt) till mappen \texttt{/} (vilket är filsystemets rot och
+\mintinline[bgcolor=codebg]{sh}|/|,
+\mintinline[bgcolor=codebg]{sh}|0| och
+\mintinline[bgcolor=codebg]{sh}|/bin/sh|.
+Detta skulle restriktera programmet
+\mintinline[bgcolor=codebg]{sh}|/bin/sh|
+(en kommandoprompt) till mappen \mintinline[bgcolor=codebg]{sh}|/| (vilket är filsystemets rot och
 inkluderar därmed hela systemet) och köra det som användaren root.
 
 Detta skulle ge hackaren fri tillgång till att köra vad som än behagar denna med
@@ -272,11 +317,12 @@ exekverbart av andra.
 För att åstadkomma detta samt det som tidigare beskrevs om \textit{setuid}-biten
 används följande kommandon:
 
-\texttt{sudo chown root:judge-master executor}
+\begin{minted}{sh}
+sudo chown root:judge-daemon executor
+sudo chmod 4750 executor
+\end{minted}
 
-\texttt{sudo chmod 4750 executor}
-\\
-\textit{judge-master} är namnet på gruppen och den skapas automatiskt vid
+\textit{judge-daemon} är namnet på gruppen och den skapas automatiskt vid
 skapandet av en användare med samma namn.
 
 \subsection{Isolering från kommunikation via internet}
@@ -289,7 +335,7 @@ Men att skapa en anslutning till exempelvis ``127.0.0.1'' eller
 ``216.58.211.14'' går fortfarande.
 
 För att lösa detta testades först att återigen använda Docker. Den här gången
-med dess argument \texttt{--net=none} vid skapandet av en container. Detta gör
+med dess argument \mintinline[bgcolor=codebg]{sh}|--net=none| vid skapandet av en container. Detta gör
 att containern inte får någon tillgång internet. Tyvärr krävs förmågan att kunna
 kommunicera med containern utifrån för att bland annat skicka in och ut testdata
 och svar.
@@ -354,7 +400,7 @@ grund av:
 		till en enda fil i maskinkod som kan exekveras direkt, utan en körmotor
 		eller interpreterare.
 	\item Rusts strikta typsystem tvingar utvecklaren att explicit hantera fel
-		och situationer där man \textit{kanske} har ett värde. Därmed slipper
+		och situationer där ett värde \textit{kanske} existerar. Därmed slipper
 		utvecklaren felsöka fall av \textit{Segfault} (som i C/C++) eller
 		\textit{NullPointerException} (som i Java).
 \end{itemize}
@@ -416,11 +462,13 @@ Alla anslutningar itereras över och hanteras i en separat funktion.
 
 While-let-loopen itererar över alla inkommande anslutningar.  Adressen till den
 anslutande klienten är i det här fallet ointressant, men socketen som är
-ansluten till klienten skickas in till funktionen \texttt{handle\_connection}.
+ansluten till klienten skickas in till funktionen
+\mintinline[bgcolor=codebg]{sh}|handle_connection|.
 (Klienten är i det här fallet webbservern.)
 
-\texttt{handle\_connection} använder en \texttt{BufReader} och dess metod
-\texttt{lines} för att iterera över varje textrad av data som tagits emot.
+\mintinline[bgcolor=codebg]{sh}|handle_connection| använder en
+\mintinline[bgcolor=codebg]{sh}|BufReader| och dess metod
+\mintinline[bgcolor=codebg]{sh}|lines| för att iterera över varje textrad av data som tagits emot.
 
 \begin{listing}[H]
 	\caption{Funktionen som hanterar anslutningar}
@@ -438,8 +486,8 @@ ansluten till klienten skickas in till funktionen \texttt{handle\_connection}.
 \subsubsection{Hantera meddelanden}
 
 I for-loopen används biblioteken \textit{serde\_json} och dess funktion
-\texttt{from\_str} för att konvertera meddelandet till datastrukturen
-\texttt{Submission}, en inlämning. Om detta inte går skrivs meddelandet ut till
+\mintinline[bgcolor=codebg]{sh}|from_str| för att konvertera meddelandet till datastrukturen
+\mintinline[bgcolor=codebg]{sh}|Submission|, en inlämning. Om detta inte går skrivs meddelandet ut till
 konsollen för lättare felsökning och ett felmeddelande skickas tillbaka i
 socketen.
 
@@ -463,12 +511,12 @@ socketen.
 	\end{minted}
 \end{listing}
 
-Datastrukturen \texttt{Submission} är avserialiserbar och innehåller information
+Datastrukturen \mintinline[bgcolor=codebg]{sh}|Submission| är avserialiserbar och innehåller information
 om användarens program och problemet, dessutom har varje inlämning ett eget
 id-nummer.
 
 \begin{listing}[H]
-	\caption{Datastrukturen \texttt{Submission}}
+	\caption{Datastrukturen \mintinline[bgcolor=codebg]{sh}|Submission|}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		use serde::Deserialize;
 
@@ -480,12 +528,12 @@ id-nummer.
 			source: String,
 			test_cases: Vec<(String, String)>,
 			time_limit: u128,
-			memory_limit: u128,
 		}
 	\end{minted}
 \end{listing}
 
-Efter att inlämningen tagits fram anropas dess metod \texttt{judge}, som avgör
+Efter att inlämningen tagits fram anropas dess metod
+\mintinline[bgcolor=codebg]{sh}|judge|, som avgör
 om användarens program är korrekt och skickar resultatet till socketen.
 
 \begin{listing}[H]
@@ -498,7 +546,7 @@ om användarens program är korrekt och skickar resultatet till socketen.
 \subsubsection{Bedömning av inlämningar}
 
 För att bedöma om programmet är korrekt och tillräckligt snabbt körs det med
-vissa specifika testdata (sparade i \texttt{test\_cases}) och kontrolleras
+vissa specifika testdata (sparade i \mintinline[bgcolor=codebg]{sh}|test_cases|) och kontrolleras
 att rätt utdata ges tillbaka. För att detta ska göras säkert används en
 ``sandlåda'', vars uppgift är att stänga in användarens program och endast låta
 det läsa in och mata ut data, samt utföra operationer och algoritmer med denna
@@ -509,7 +557,8 @@ ordning, tills att de tar slut, användarens program misslyckas, eller domaren
 stöter på ett problem.
 
 \begin{listing}[H]
-	\caption{Skelett av metoden \texttt{judge}\label{judge-method}}
+	\caption{Skelett av metoden
+		\mintinline[bgcolor=codebg]{sh}|judge|\label{judge-method}}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		impl Submission {
 			pub fn judge(&self, socket: &mut TcpStream) {
@@ -550,7 +599,7 @@ stöter på ett problem.
 Nedan följer ett skelett av datastrukturen för en sandlåda.
 
 \begin{listing}[H]
-	\caption{Datastrukturen \texttt{Sandbox}}
+	\caption{Datastrukturen \mintinline[bgcolor=codebg]{sh}|Sandbox|}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		#[derive(Debug)]
 		pub struct Sandbox {
@@ -636,7 +685,8 @@ Användarens program sparas i mappen och kompileras.
 	\end{minted}
 \end{listing}
 
-När sedan användarens program körs, i metoden \texttt{run\_test\_case}, används
+När sedan användarens program körs, i metoden
+\mintinline[bgcolor=codebg]{sh}|run_test_case|, används
 \textit{executor} (se sektion \ref{executor}). Sandlådans mapp används som rot
 för filsystemet. Därmed får användaren endast tillgång till vad som är
 nödvändigt. Id:t för användaren \textit{judge-instance} hämtas från en
@@ -669,7 +719,7 @@ och testfallets indata skrivs till programmet.
 
 Sedan inväntar domaren att användarens program körs färdigt och stänger ner sig
 självt, eller att den max tillåtna tiden tar slut. Funktionen
-\texttt{yield\_now} används för att förhindra att loopen körs för fort och tar
+\mintinline[bgcolor=codebg]{sh}|yield_now| används för att förhindra att loopen körs för fort och tar
 upp processorns tid och kraft.
 
 \begin{listing}[H]
@@ -746,7 +796,7 @@ att förhindra buggar på grund av stavfel skapades en datastruktur som beskrive
 ett ``svar'' från domaren.
 
 \begin{listing}[H]
-	\caption{Datastrukturen \texttt{Response} beskriver ett svar från domaren}
+	\caption{Datastrukturen \mintinline[bgcolor=codebg]{sh}|Response| beskriver ett svar från domaren}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		#[derive(Serialize)]
 		#[serde(rename_all = "camelCase")]
@@ -759,12 +809,13 @@ ett ``svar'' från domaren.
 	\end{minted}
 \end{listing}
 
-Svarets ``status'' beskriver hur bedömningen gått. Med \texttt{Pending} menas
-att bedömning fortfarande är igång. \texttt{JudgeError} betyder att något gått
+Svarets ``status'' beskriver hur bedömningen gått. Med
+\mintinline[bgcolor=codebg]{sh}|Pending| menas
+att bedömning fortfarande är igång. \mintinline[bgcolor=codebg]{sh}|JudgeError| betyder att något gått
 fel hos domaren. De andra bör beskriva sig själva.
 
 \begin{listing}[H]
-	\caption{Datastrukturen \texttt{Response} beskriver ett svar från domaren}
+	\caption{Datastrukturen \mintinline[bgcolor=codebg]{sh}|Response| beskriver ett svar från domaren}
 	\label{status-enum}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		#[derive(Serialize, PartialEq)]
@@ -781,14 +832,15 @@ fel hos domaren. De andra bör beskriva sig själva.
 	\end{minted}
 \end{listing}
 
-Efter varje resultat från \texttt{run\_test\_case} körs någon av armarna i
+Efter varje resultat från \mintinline[bgcolor=codebg]{sh}|run_test_case| körs någon av armarna i
 match-uttrycket i \coderef{judge-method}. Vid ett lyckat resultat (då
-\texttt{status} är \texttt{Status::Accepted}) och det ännu finns testfall kvar
-att köras meddelas detta via socketen och \texttt{run\_test\_case} anropas igen
+\mintinline[bgcolor=codebg]{sh}|status| är \mintinline[bgcolor=codebg]{sh}|Status::Accepted|) och det ännu finns testfall kvar
+att köras meddelas detta via socketen och
+\mintinline[bgcolor=codebg]{sh}|run_test_case| anropas igen
 i nästa iteration av for-loopen.
 
 \begin{listing}[H]
-	\caption{Resultaten från \texttt{run\_test\_case} meddelas kontinuerligt}
+	\caption{Resultaten från \mintinline[bgcolor=codebg]{sh}|run_test_case| meddelas kontinuerligt}
 	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4]{rust}
 		Ok((Status::Accepted, time)) => {
 			write!(
@@ -829,7 +881,7 @@ användarnas program och att skicka tillbaka resultat till webbservern.
 Självklart används även processorns krafter till andra program på servern men
 denna lösning fungerar bra i de flesta fallen.
 
-Först utökas \texttt{main}funktionen så att den startar trådpoolen.
+Först utökas \mintinline[bgcolor=codebg]{sh}|main|funktionen så att den startar trådpoolen.
 
 \begin{listing}[H]
 	\caption{En trådpool skapas}
@@ -838,8 +890,9 @@ Först utökas \texttt{main}funktionen så att den startar trådpoolen.
 	\end{minted}
 \end{listing}
 
-En referens till denna skickas med till \texttt{handle\_connection}. När en
-inlämning tagits emot anropas inte metoden \texttt{judge} direkt, utan den
+En referens till denna skickas med till
+\mintinline[bgcolor=codebg]{sh}|handle_connection|. När en
+inlämning tagits emot anropas inte metoden \mintinline[bgcolor=codebg]{sh}|judge| direkt, utan den
 lämnas in till trådpoolen. \coderef{call-judge} byts alltså ut mot:
 
 \begin{listing}[H]
@@ -905,7 +958,7 @@ Databasstrukturen beskrevs på papper med ett databasschema. Se
 Sedan skapades denna struktur i en faktisk databas. Värt att notera är att
 ``type'', tillhörande ``Votes on'', är en \textit{enumeration} med de möjliga
 värdena ``upp'' och ``ner''. ``status'', tillhörande ``Submits to'' motsvarar
-\texttt{Status} i \coderef{status-enum}.
+\mintinline[bgcolor=codebg]{sh}|Status| i \coderef{status-enum}.
 
 \subsubsection{Webbserver}
 \label{webbserver}
@@ -984,28 +1037,32 @@ Nedan följer funktionen som används för att kryptera kakorna.
 
 Avkrypteringen fungerar likadant, fast bakvänt.
 
-\paragraph{Sapper \& rutter}
+\paragraph{Ändpunkter}
 
 I ett projekt gjort med Sapper placeras alla ändpunkter webbservern ska
 tillgängliggöra i separata filer. Beroende på vilka HTTP-förfrågningsmetoder som
 ska finnas tillgängliga på ändpunkten exporterar filen funktioner funktioner med
 motsvarande namn. (Alltså ``get'', ``post'', ``head'', osv). Ändpunkter ges
-filänden \texttt{.json.js}, men \texttt{.js} finns ej med i ändpunktens namn när
-klienten skickar en förfrågan.
+filänden \mintinline[bgcolor=codebg]{sh}|.json.js|, men
+\mintinline[bgcolor=codebg]{sh}|.js| finns ej med i ändpunktens namn när
+klienten skickar en förfrågan. Dessa filer placeras i mappen
+\mintinline[bgcolor=codebg]{sh}|/src/routes/| som ligger i projektets rot.
 
-Om exempelvis filen \texttt{routes/foo/bar.json.js} exporterar funktionen
-\texttt{get} kan webbservern ta emot en \textit{get}-förfrågan på
-\texttt{/foo/bar.json}.
+Om exempelvis filen \mintinline[bgcolor=codebg]{sh}|src/routes/foo/bar.json.js|
+exporterar funktionen \mintinline[bgcolor=codebg]{sh}|get| kan webbservern ta
+emot en \textit{get}-förfrågan på
+\mintinline[bgcolor=codebg]{sh}|/foo/bar.json|.
 
 Funktionerna anropas när någon skickar en HTTP-förfrågan till ändpunkten. I
-funktionerna tillgängliggörs två parametrar: \texttt{req} och \texttt{res}.
-\texttt{req} beskriver information om förfrågan som skickades och \texttt{res}
-används för att skicka tillbaka ett svar.
+funktionerna tillgängliggörs två parametrar:
+\mintinline[bgcolor=codebg]{sh}|req| och \mintinline[bgcolor=codebg]{sh}|res|.
+\mintinline[bgcolor=codebg]{sh}|req| beskriver information om förfrågan som
+skickades och \mintinline[bgcolor=codebg]{sh}|res| används för att skicka
+tillbaka ett svar.
 
-% några specifika: login.json, 
 Nedan följer ett exemepl på en ändpunkt som implementerades i detta projekt.
-Filen heter \texttt{login.json.js} och definierar en ändpunkt som används för
-att logga in ett konto och därmed skapa en session.
+Filen heter \mintinline[bgcolor=codebg]{sh}|src/routes/login.json.js| och definierar en ändpunkt som
+används för att logga in ett konto och därmed skapa en session.
 
 \begin{listing}[H]
 	\caption{Inloggningsändpunkten}
@@ -1048,16 +1105,16 @@ identifikationsnummer och lösenordshash från databasen. Efter det kontrolleras
 att ett konto hittades och att lösenordet matchar med hashen i databasen. För
 detta används algoritmen \textit{bcrypt} från ett externt bibliotek.
 
-Slutligen sparas kontots identifikationsnummer i \texttt{req.token}. Detta
+Slutligen sparas kontots identifikationsnummer i
+\mintinline[bgcolor=codebg]{sh}|req.token|. Detta
 kommer sedan automatisk krypteras och skickas med som en kaka innan servern
 svarar klienten.
 
 Ett annat exempel på ändpunkt är den där information om en specifik inlämning
-hämtas. Filen heter \texttt{index.json.js} och ligger i \\
-\texttt{routes/submissions/[submission]/}. Att rutten har en del med
-hakparanteser i sig leder till att ändpunkten blir dynamisk och
-\texttt{/submissions/<vad som helst>.json} kan anropas. Notera även att
-\texttt{/index} ej måste finnas med i förfrågan.
+hämtas. Filen heter \mintinline[bgcolor=codebg]{sh}|routes/submissions/[submission]/index.json.js|. Att
+rutten har en del med hakparanteser i sig leder till att ändpunkten blir
+dynamisk och \mintinline[bgcolor=codebg]{sh}|/submissions/<vad som helst>.json| kan anropas. Notera även
+att \mintinline[bgcolor=codebg]{sh}|/index| ej måste finnas med i förfrågan.
 
 \begin{listing}[H]
 	\caption{Inlämningshämtningsändpunkten}
@@ -1078,7 +1135,6 @@ hakparanteser i sig leder till att ändpunkten blir dynamisk och
 					problem.long_name AS "problem.longName",
 					public, timestamp, lang, source, status,
 					max_runtime_ms AS maxRuntime,
-					max_memory_mb AS maxMemory,
 					test_cases_succeeded AS "testCases.succeeded",
 					COUNT(test_case.id) AS "testCases.total",
 					account_id = ? AS requesterIsOwner
@@ -1107,26 +1163,230 @@ hakparanteser i sig leder till att ändpunkten blir dynamisk och
 \end{listing}
 
 Majoriteten är denna ändpunkt är ett SQL-query. Notera att
-\texttt{req.token.id} används. Detta är från början inte en del av förfrågan,
+\mintinline[bgcolor=codebg]{sh}|req.token.id| används. Detta är från början inte en del av förfrågan,
 eftersom klienten inte känner till sitt identifikationsnummer, utan ``sätts in''
 av en annan del funktion innan denna anropas.
 
 \subsubsection{Webbsida}
 
-% sapper & svelte -- connection
-% ajax/server rendered
-% samma kod kan köras på både server och klient
-% anledning till val: bind:<sak>={<var>}
-% kort snutt av exemepel
+Sapper som använts till webbservern är sammankopplat med webbsideramverket
+``Svelte''. Detta medger att webbsidan måste vara byggd med Svelte. Sapper kan
+också ses som en utbyggnad av Sapper.
+
+Nackdelen med att använda AJAX \--- \underline{a}synchronous
+\underline{J}avaScript \underline{a}nd \underline{X}ML, asynkron JavaScript och
+XML är att det kan göra webbsidors initiala laddtid långsammare. Detta för att
+webbläsaren först hämtar all HTML, CSS och JavaScript, sedan körs ett skript som
+får webbläsaren att fråga servern igen om data som behövs för att visa sidan.
+
+Sapper löser detta genom att en \textit{rutt} kan definiera en speciell funktion
+som hämtar den data som krävs för att visa sidan. Om en användare går till en
+sådan rutt direkt körs denna funktion redan på servern. Om funktionen hämtar
+data från samma server görs detta med ett vanligt funktionsanrop. Denna data
+skickas då med samtidigt som resten av sidan skickas.
+
+Men om användaren går från en rutt till en annan genom att följa en hyperlänk
+behöver inte hela sidan ladda om, utan Sapper ser till att endast den nya
+HTML:en, CSS:en, JavaScripten och datan som krävs hämtas från servern. I detta
+fall körs den omtalade funktionen på webbläsaren. Samma funktion kan alltså både
+köras på servern och i webbläsaren.
+
+Svelte i sig är ett ramverk som låter utvecklaren dela upp webbsidan i olika
+komponenter som hanterar sig själva. En komponent består av tre huvuddelar:
+
+\begin{itemize}
+	\item HTML-liknande kod som översätts till JavaScript som sedan genererar
+		riktigt HTML.
+	\item CSS-stiltaggar som ändrar utseendet på HTML:en i just den egna
+		komponenten. Stiltaggarna i olika komponenter hindras alltså från att
+		``krocka'' med varandra.
+	\item JavaScript som påverkar vad HTML:en innehåller, hämtar data, och gör
+		webbsidan interaktiv.
+\end{itemize}
+
+Rutterna på hemsidan sparas också i \mintinline[bgcolor=codebg]{sh}|src/routes/|
+och har filändelsen \mintinline[bgcolor=codebg]{sh}|.svelte|, men denna är ej
+med i rutten webbläsaren hämtar.
+
+Ett förenklat exempel på en sådan rutt i detta projekt är
+\mintinline[bgcolor=codebg]{sh}|src/routes/login.svelte|, som alltså koms åt av
+webbläsaren på \mintinline[bgcolor=codebg]{sh}|/login| som följer nedan:
+
+\begin{listing}[H]
+	\caption{Förenkling av rutten \mintinline[bgcolor=codebg]{sh}|/login|}
+	\begin{minted}[bgcolor=codebg,autogobble,tabsize=4,linenos]{html}
+		<style>
+			.error {
+				color: red;
+			}
+		</style>
+		<script>
+			import { goto } from "@sapper/app";
+			import { slide } from "svelte/transition";
+
+			let errors = [];
+			let username = "";
+			let password = "";
+
+			async function submit() {
+				msgs = [];
+
+				if (!username)
+					return errors = ["Missing username"];
+				if (!password)
+					return errors = ["Missing password"];
+
+				const res = await fetch("/login.json", {
+					method: "post",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						username,
+						password,
+					}),
+				});
+				const json = await res.json();
+
+				if (res.status === 200) goto("/");
+				else errors = [...errors, json.msg];
+			}
+		</script>
+		<input id="username" type="text" bind:value={username} />
+		<input id="password" type="password" bind:value={password} />
+		<button on:click={submit}>Log in</button>
+		{#each errors as error (error)}
+			<p transition:slide class="error">{error}</p>
+		{/each}
+	\end{minted}
+\end{listing}
+
+Värt att notera är
+\mintinline[bgcolor=codebg]{css}|bind:value={/*...*/}|-syntaxen. Detta är
+Svelte-specifikt och ``binder'' ihop ett värde med en variabel. I det här fallet
+binds variabeln \mintinline[bgcolor=codebg]{js}|username| samman med texten som
+står i inputfältet på webbsidan. Detta medger att om variabeln ändras från
+skriptet så ändras texten i fältet och när användaren ändrar texten i fältet
+ändras även variabeln.
+
+Längst ner används sveltes \mintinline[bgcolor=codebg]{sh}|#each|-syntax. Detta
+efterliknar en for-loop då detta exempel producerar ett paragrafelement för
+varje värde i listan \mintinline[bgcolor=codebg]{js}|errors|. Dessutom markeras
+elementen att använda övergången \mintinline[bgcolor=codebg]{js}|slide|, som är
+inbyggd Svelte. Dessa inbyggda övergångar underlättar att skapa en mer
+``rörlig'' webbsida.
+
+Notera även att funktionen \mintinline[bgcolor=codebg]{js}|submit| anropas när
+knappen trycks av användaren och att denna skickar en HTTP-förfrågan till
+servern. Dataformatet som används är även här JSON.
 
 \section{Resultat}
 
+Resultatet blev i huvudsak som planerat. Webbsidan är i ett adekvat fungerande
+skick. Dessa funktioner har implementerats:
+
+\begin{itemize}
+	\item Registrering av konto
+	\item Inloggning med konto
+	\item Topplista, där konton rangordnas efter antal insamlade ``poäng''
+	\item Visning av konto
+	\item Lista av problem
+	\item Visning av specifikt problem
+	\item Röstning på problem
+	\item Uppvisning av information om inlämningar till specifikt problem
+	\item Inlämning till problem
+	\item Bedömning av inlämning
+	\item Lista av användarens egna inlämningar
+	\item Möjlighet att markera inlämning som publik
+	\item Visning av specifik inlämning (resultat + källkod)
+	\item Kontoinställningar
+	\item Möjlighet att skapa problem
+\end{itemize}
+
+Språk som går att skapa lösningar och skicka in är C och C++. Domaren har
+kodmässigt möjlighet att bedöma samtliga kompilerade språk, men ytterligare
+konfiguration skulle behöva tilläggas.
+
+Nedan följer ett fåtal bilder av den utvecklade produkten.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{problem}
+	\caption{Visning av problem}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{submission}
+	\caption{Visning av inlämning}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{problem-list}
+	\caption{Lista av problem}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{create-problem}
+	\caption{Skapandet av nytt problem}
+\end{figure}
+
 \section{Diskussion / Slutsatser}
 
+\subsection{Hur exekveras opålitlig kod på ett säkert sätt?}
+
+Med användningen av chroot, ändring till en annan användare samt
+brandväggsregeln som förhindrar användaren från att nå internet \underline{bör}
+exekveringen ske säkert. Men med de flesta andra säkerhetsriskerna är det svårt
+att vara \underline{helt} garanterad om att detta stämmer.
+
+Mig veterligen finns dock inga säkerhetshål kvar.
+
+\subsection{Hur mäts ett programs körningstid samt minnesallokeringsmängd på
+	ett konsekvent sätt?}
+
+Som beskrivet tidigare i rapporten är det viktigt att inte exekvera för många
+användarprogram samtidigt, samt att andra processer inte ``själ'' användarnas
+programs proccessortid.
+
+Ett stort problem är dock att denna domare mäter den riktiga tid som passerar
+från att användarens program startas till att den avslutas. Istället går det
+även att mäta just tiden som spenderats till att exekvera ett visst program.
+Från vad jag hittat så verkar det endast möjligt att mäta detta för den
+nuvaranda processen eller för samtilga ``barnprocesser'' samtidigt (med
+syscallet \textit{getrusage}). Det skulle möjligvis gå att göra detta från
+\textit{executor}, men då skulle ej \textit{execve} kunna användas, eftersom
+funktionen aldrig returnerar. Det är därför inte möjligt att helt enkelt mäta
+tiden det tog efter att användarens program exekveras klart.
+
+Alltså mäts körningstiden, men inte nödvändigvis helt konsekvent.
+
+Mätning av minnesallokeringsmängden hann jag tyvärr inte implementera. Det
+verkar som att två alternativ finns: kontrollera detta konstant, om och om igen,
+eller att använda \textit{getrusage}, vilket ger bland annat ger ``det maximala
+antalet kilobytes fysiskt minne programmet använde samtidigt''.
+(\href{https://www.gnu.org/savannah-checkouts/gnu/libc/manual/html_node/Resource-Usage.html#Resource-Usage}{GNUs
+dokumentation av \textit{getrusage}}). Då stöter man dock på samma problem som
+med att mäta tiden.
+
+\subsection{Hur implementeras en både tillfredsställande och säker
+	användarupplevelse?}
+
+Man bara gör't. Kör lite krypterade kakor, bcrypt som kör hashning och salt,
+HTTPS, och sånt scheiße. Guten nacht.
+
 \section{Referenser}
+
+\begin{itemize}
+	\item BIG BRAIN
+\end{itemize}
 
 \section{Bilagor}
 
 \listoffigures{}
+
+\listoflistings{}
 
 \end{document}
