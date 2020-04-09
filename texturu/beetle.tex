@@ -73,7 +73,7 @@ Den första kända tävlingen inom programmeringsproblemlösning kallades ``Firs
 Annual Texas Collegiate Programming Championship'' (Competitive Programming,
 Wikipedia) och anordnades vid ``Texas A\&M University''. Då skrevs program på
 papper och slogs sedan in i hålkort för testkörning (International Collegiate
-Programming Context, Wikipedia).
+Programming Contest, Wikipedia).
 
 I Sverige har ``Programmeringsolympiaden'', en tävling för gymnasieelever,
 anordnats årligen sedan 1989. Denna är i sig en uttagning för det svenska laget
@@ -102,12 +102,14 @@ För att till fullo förstå helheten av denna rapport eller åtminstone inför 
 försök att efterlikna arbetet som här presenteras, rekommenderas läsaren att:
 
 \begin{itemize}
-	\item ha grundläggande kunskaper om programmering samt
+	\item ha grundläggande kunskaper om programmering samt,
 		programmeringsrelaterade termer,
 	\item känna sig bekväm med datorer och användandet av en kommandotolk,
-	\item känna till vad en brandvägg är,
-	\item samt vara lika cool som Julius \verb|@^V^@|
+	\item samt känna till vad en brandvägg är.
 \end{itemize}
+
+Detta är dock ej krav och meningen är att det fortfarande ska vara möjligt att
+förstå rapporten.
 
 \subsection{Frågeställningar}
 
@@ -130,15 +132,31 @@ försök att efterlikna arbetet som här presenteras, rekommenderas läsaren att
 
 \end{itemize}
 
-% \subsection{Metod}
+\subsection{Metod}
+
+Inledningsvis undersöktes olika metoder för att köra användares program säkert.
+Sedan implementerades detta i form av ett litet program skrivet i
+programmeringsspråket C. Därefter utvecklades en domare som kör detta program
+och avgör användarnas programs prestation. Efter detta utvecklades en webbserver
+som kommunicerar med domaren samt sparar all information i en databas. Slutligen
+utvecklades en webbapplikation som användaren interagerar med.
 
 \subsection{Material}
 
-Mina bara händer och BIG BRAIN.
+``Font Awesome'' har använts för ikoner på webbapplikationen. Alla ikoner som
+använts är gratis och det är tillåtet att använda dessa.
+
+För att kompilera och köra de utvecklade programmen har ``gcc'' (``GNU Compiler
+Collection''), ``Cargo'' och ``Node.js'' använts.
+
+Versionskontrollsystemet ``git'' har använts för att bla.a. synkronisera
+projektet mellan olika datorer. Dessutom har \href{https://github.com/}{GitHub}
+använts för att lagra projektet.
 
 \subsection{Avgränsningar}
 
-Inte mäter jag minnesallokering i alla fall.
+På grund av tidsbrist har användares programs minnesallokeringsmängd inte mätts.
+Ej heller mäts körningstiden på ett helt konsekvent sätt.
 
 % \begin{itemize}
 % 	\item
@@ -192,7 +210,7 @@ program. För att exempelvis köra ett program skrivet i Java krävs bland annat
 \textit{Java virtual machine}, samt ytterligare några bibliotek som
 \textit{JVM}en laddar in när den körs.
 
-Nackdelen men att använda chroot är att endast användaren \textit{root} har
+Nackdelen med att använda chroot är att endast användaren \textit{root} har
 tillgång till syscallet. Användaren root är datorns administratör och att
 exekvera an\-vändarens program som denna användare är i sig en stor säkerhetsrisk.
 Dessutom är det osäkert att programmet som startar användarens program kör som
@@ -225,7 +243,7 @@ programmet exekverades direkt.
 \hypertarget{executor}{}
 \label{executor}
 
-För att implementera allt detta valdes under detta projekt att skapa kort
+För att implementera allt detta valdes under detta projekt att skapa ett kort
 program i språket C. Via programmets argument får det information om vilken mapp
 den ska restriktera sig till, vilket program den ska exekvera, samt vilken
 användare programmet ska köras som. Programmet kommer härifrån refereras till
@@ -327,12 +345,18 @@ skapandet av en användare med samma namn.
 
 \subsection{Isolering från kommunikation via internet}
 
-Att ansluta till exempelvis ``localhost'' eller ``google.com'' är redan omöjligt
-eftersom detta kräver att vissa filer läses för att ta reda på vilka IP-adresser
-dessa domännamn refererar till.
+För att ansluta till exempelvis ``duckduckgo.com'', eller ``magnusson.space''
+krävs att en ``domännamnserver'' kontaktas och efterfrågas vilken IP-adress
+domännamnet tillhör.
 
-Men att skapa en anslutning till exempelvis ``127.0.0.1'' eller
-``216.58.211.14'' går fortfarande.
+Men för att först kunna kontakta domännamnservern måste dennas IP-adress vara
+känd, och detta sparas på datorn i en fil (oftast \texttt{/etc/resolve.conf}).
+Eftersom programmet redan är låst från filsystemet är detta därmed redan
+omöjligt.
+
+Däremot finns det ännu inget som hindrar en användares program från att ansluta
+direkt till en IP-adress, som exempelvis ``79.125.108.55'', eller \\
+``51.68.174.117''.
 
 För att lösa detta testades först att återigen använda Docker. Den här gången
 med dess argument \mintinline[bgcolor=codebg]{sh}|--net=none| vid skapandet av en container. Detta gör
@@ -345,10 +369,10 @@ för att konfigurera brandväggen och därmed filtrera bort viss trafik baserat 
 vissa parametrar.
 
 Först gjordes ett försök att fortfarande låta användarens program köras i en
-docker-container och att i den filtrera bort all utgående trafik, samt all
+docker-container och att i den filtrera bort all utgående trafik samt all
 ingående trafik förutom på en port, vilken skulle vara upptagen med annan
-trafik och därmed även den blockerad. Detta kan åstadkommas med följande
-kommandon:
+trafik och därmed vara blockerad för andra program. Detta kan åstadkommas med
+följande kommandon:
 
 \begin{minted}{sh}
 iptables -A OUTPUT -j DROP
@@ -392,7 +416,7 @@ grund av:
 	\item Tillgången till bekväma funktionaliteter som oftast hittas i språk av
 		``högre nivå'' som exempelvis Haskell och Javascript. Ett exempel på detta
 		är lata iteratorer.
-	\item Rusts välfungerande och lättanvända byggsystem som som automatiskt
+	\item Rusts välfungerande och lättanvända byggsystem som automatiskt
 		laddar ner och kompilerar bibliotek som används av applikationen, samt
 		det stora antalet bibliotek som finns tillgängligt via rusts
 		bibliotekssamling på \href{https://crates.io}{crates.io}.
@@ -414,8 +438,8 @@ ansluter till den (vilken beskrivs i sektion \ref{webbserver}) gör det. Däremo
 krävs ej flera anslutningar samtidigt eftersom endast en webbserver körs.
 
 Dataformatet som valdes är JSON, främst för att det är lätt att jobba med. Både
-för hand, i Rust, tack vare biblioteket \textit{serde\_json}, och i JavaScript,
-som webbservern valdes att implementeras i.
+för hand, i Rust med biblioteket \textit{serde\_json}, och i JavaScript, som
+webbservern valdes att implementeras i.
 
 Varje förfrågning om ett användarinlämnat program skulle vara ett ett eget
 JSON-objekt innehållande programmets källkod, språk, samt väsentlig information
@@ -638,7 +662,7 @@ mapp för temporära filer.
 	\end{minted}
 \end{listing}
 
-Sedan kopieras nödvändiga filer in. Dessa filer hämtas från från en
+Sedan kopieras nödvändiga filer in. Dessa filer hämtas från en
 konfigurationsfil och varierar beroende på vilket språk användarens program är
 skrivet i.
 
@@ -981,6 +1005,8 @@ I användarens webbläsare sparas ett unikt identifikationsnummer och på
 webbservern en tabell med dessa identifikationsnummer kopplade till data om det
 inloggade kontot.
 
+% TODO: genomgång om feistelkrypto?
+
 För att undvika att behöva spara detta i webbservern valdes istället att spara
 denna data i kakan. Men för att göra detta säker krypterades kakan med det
 symmetriska ``Feistelkryptot''. Detta gör det omöjligt för en illvillig
@@ -1041,7 +1067,7 @@ Avkrypteringen fungerar likadant, fast bakvänt.
 
 I ett projekt gjort med Sapper placeras alla ändpunkter webbservern ska
 tillgängliggöra i separata filer. Beroende på vilka HTTP-förfrågningsmetoder som
-ska finnas tillgängliga på ändpunkten exporterar filen funktioner funktioner med
+ska finnas tillgängliga på ändpunkten exporterar filen funktioner med
 motsvarande namn. (Alltså ``get'', ``post'', ``head'', osv). Ändpunkter ges
 filänden \mintinline[bgcolor=codebg]{sh}|.json.js|, men
 \mintinline[bgcolor=codebg]{sh}|.js| finns ej med i ändpunktens namn när
@@ -1162,10 +1188,11 @@ att \mintinline[bgcolor=codebg]{sh}|/index| ej måste finnas med i förfrågan.
 	\end{minted}
 \end{listing}
 
-Majoriteten är denna ändpunkt är ett SQL-query. Notera att
-\mintinline[bgcolor=codebg]{sh}|req.token.id| används. Detta är från början inte en del av förfrågan,
-eftersom klienten inte känner till sitt identifikationsnummer, utan ``sätts in''
-av en annan del funktion innan denna anropas.
+Majoriteten av denna ändpunkt är ett SQL-query. Notera att
+\mintinline[bgcolor=codebg]{sh}|req.token.id| används. Detta är från början inte
+en del av förfrågan, eftersom klienten inte känner till sitt
+identifikationsnummer, utan ``sätts in'' av en annan funktion innan denna
+anropas.
 
 \subsubsection{Webbsida}
 
@@ -1274,7 +1301,7 @@ efterliknar en for-loop då detta exempel producerar ett paragrafelement för
 varje värde i listan \mintinline[bgcolor=codebg]{js}|errors|. Dessutom markeras
 elementen att använda övergången \mintinline[bgcolor=codebg]{js}|slide|, som är
 inbyggd Svelte. Dessa inbyggda övergångar underlättar att skapa en mer
-``rörlig'' webbsida.
+rörlig och animerad webbsida.
 
 Notera även att funktionen \mintinline[bgcolor=codebg]{js}|submit| anropas när
 knappen trycks av användaren och att denna skickar en HTTP-förfrågan till
@@ -1282,8 +1309,12 @@ servern. Dataformatet som används är även här JSON.
 
 \section{Resultat}
 
-Resultatet blev i huvudsak som planerat. Webbsidan är i ett adekvat fungerande
-skick. Dessa funktioner har implementerats:
+Resultatet blev i huvudsak som planerat. Användares program exekveras på ett
+säkert sätt, deras programs exekveringstid mäts på ett (relativt) konsekvent
+sätt och användarupplevelsen är både säker och tillfredsställande.
+
+Webbsidan är i ett adekvat fungerande skick. Dessa funktioner har
+implementerats:
 
 \begin{itemize}
 	\item Registrering av konto
@@ -1335,6 +1366,10 @@ Nedan följer ett fåtal bilder av den utvecklade produkten.
 
 \section{Diskussion / Slutsatser}
 
+I sin helhet anser jag att projektet blev lyckat. Tyvärr blev webbsidan lite
+bristfällig på vissa områden, som t.ex. första sidan som visas. Denna är i
+princip helt tom.
+
 \subsection{Hur exekveras opålitlig kod på ett säkert sätt?}
 
 Med användningen av chroot, ändring till en annan användare samt
@@ -1348,7 +1383,7 @@ Mig veterligen finns dock inga säkerhetshål kvar.
 	ett konsekvent sätt?}
 
 Som beskrivet tidigare i rapporten är det viktigt att inte exekvera för många
-användarprogram samtidigt, samt att andra processer inte ``själ'' användarnas
+användarprogram samtidigt, samt att andra processer inte ``stjäl'' användarnas
 programs proccessortid.
 
 Ett stort problem är dock att denna domare mäter den riktiga tid som passerar
@@ -1365,22 +1400,43 @@ Alltså mäts körningstiden, men inte nödvändigvis helt konsekvent.
 
 Mätning av minnesallokeringsmängden hann jag tyvärr inte implementera. Det
 verkar som att två alternativ finns: kontrollera detta konstant, om och om igen,
-eller att använda \textit{getrusage}, vilket ger bland annat ger ``det maximala
+eller att använda \textit{getrusage}, vilket bland annat ger ``det maximala
 antalet kilobytes fysiskt minne programmet använde samtidigt''.
 (\href{https://www.gnu.org/savannah-checkouts/gnu/libc/manual/html_node/Resource-Usage.html#Resource-Usage}{GNUs
 dokumentation av \textit{getrusage}}). Då stöter man dock på samma problem som
 med att mäta tiden.
 
-\subsection{Hur implementeras en både tillfredsställande och säker
-	användarupplevelse?}
+\subsection{
+	Hur implementeras en både tillfredsställande och säker användarupplevelse?
+}
 
-Man bara gör't. Kör lite krypterade kakor, bcrypt som kör hashning och salt,
-HTTPS, och sånt scheiße. Guten nacht.
+Sessioner är en bra kompromiss mellan säkerhet och smidighet för användaren. Att
+inte alls ha sessioner och istället kräva användarens lösenord varje gång denna
+vill göra något är på vissa sätt ett säkrare alternativ. Det stora problemet med
+detta är dock att det webbsidan blir väldigt jobbig att använda.
+
+En populär lösning på detta är att spara data om användarens session på i en
+databas och spara ett ID in till databasen i en kaka i webbläsaren.
+
+Egentligen är denna lösning lite säkrare än det som implementerades i detta
+projekt, eftersom det låter webbservern aktivt invalidera sessioner om i fall
+det skulle krävas. Den enda egentliga fördelen med metoden i projektet är att
+den är lite snabbare, eftersom den inte kräver ett databasuppslag. Anledningen
+till att jag valde denna implementation var främst för att det verkade roligt
+att göra.
+
+En annan populär lösning är att använda s.k. \href{https://jwt.io}{JSON Web
+Tokens}. Dessa fungerar väldigt likt det jag själv implementerade, med den
+huvudsakliga skillnaden att de vanligtvis inte krypteras. Samtidigt ville jag
+inte att användaren skulle få veta vad som sparas i dess session. Det största
+biblioteket, \textit{jsonwebtoken}, till node har inte stöd för kryptering och
+när jag bestämde mig för detta kände jag inte till att ett annat bibliotek
+fanns, som har stöd för krypering.
 
 \section{Referenser}
 
 \begin{itemize}
-	\item BIG BRAIN
+	\item Mathias hjärna (2001)
 \end{itemize}
 
 \section{Bilagor}
