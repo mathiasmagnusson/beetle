@@ -56,8 +56,8 @@ The majority of this report describes how all of the above was, and can be,
 implemented. Both text describing all methods used, as well as code snippets and
 commands showing parts the actual implementation is included.
 
-The main focus of the report lies on executing untrusted code. Less focus is
-lies on the web application and server, but it is still included and roughly
+The main focus of the report lies on executing untrusted code. Less focus lies
+on the web application and server, but it is still included and roughly
 described.
 
 \end{par}
@@ -88,9 +88,10 @@ Programming Contest, Wikipedia).
 I Sverige har ``Programmeringsolympiaden'', en tävling för gymnasieelever,
 anordnats årligen sedan 1989. Denna är i sig en uttagning för det svenska laget
 till den internationella tävlingen ``International Olympiad in Informatics''.
-
 Dessa två, och åtskilligt många andra tävlingar använder sig utav onlineverktyg
 för att testköra och bedöma deltagarnas program.
+% använder sig av onlineverktyg?
+% de tävlandes program?
 
 Många av dessa onlineverktyg, som \href{https://open.kattis.com}{kattis.com},
 och \href{https://codefoces.com}{codeforces.com}, har även samlingar med problem
@@ -151,6 +152,8 @@ och avgör användarnas programs prestation. Efter detta utvecklades en webbserv
 som kommunicerar med domaren samt sparar all information i en databas. Slutligen
 utvecklades en webbapplikation som användaren interagerar med.
 
+% kombinera de två första meningarna
+
 \subsection{Material}
 
 ``Font Awesome'' har använts för ikoner på webbapplikationen. Alla ikoner som
@@ -162,6 +165,8 @@ Collection''), ``Cargo'' och ``Node.js'' använts.
 Versionskontrollsystemet ``git'' har använts för att bla.a. synkronisera
 projektet mellan olika datorer. Dessutom har \href{https://github.com/}{GitHub}
 använts för att lagra projektet.
+
+% förtydliga vad gcc, cargo & node är? likt förklaringen till docker
 
 \subsection{Avgränsningar}
 
@@ -205,6 +210,8 @@ isoleras: åtkomst till filsystemet, samt åtkomst till internet. Om båda dessa
 helt förhindrade är det enda ett program kan göra att läsa in data från dess
 inmatningsström, skriva ut data till dess utmatningsström, samt utföra
 beräkningar på denna data. Inget av detta utgör säkerhetsrisker.
+
+% skriv att en docker-instans iaf är snabbare än en vm?
 
 \subsection{Isolering från filsystem}
 
@@ -323,24 +330,21 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 \end{minted}
 
 Viktigt att notera är att programmet inte tillåter att köra program med
-användar-id:t \mintinline[bgcolor=codebg]{sh}|0|, vilket alltid är användar-id:t för användaren root. Om
-detta tilläts skulle en potentiell hackare som på något sätt fått tillgång till
-att exekvera detta program exempelvis kunna exekvera det med argumenten
-\mintinline[bgcolor=codebg]{sh}|/|,
-\mintinline[bgcolor=codebg]{sh}|0| och
-\mintinline[bgcolor=codebg]{sh}|/bin/sh|.
-Detta skulle restriktera programmet
-\mintinline[bgcolor=codebg]{sh}|/bin/sh|
-(en kommandoprompt) till mappen \mintinline[bgcolor=codebg]{sh}|/| (vilket är filsystemets rot och
-inkluderar därmed hela systemet) och köra det som användaren root.
-
-Detta skulle ge hackaren fri tillgång till att köra vad som än behagar denna med
-servern.
+användar-id:t \mintinline[bgcolor=codebg]{sh}|0|, vilket alltid är användar-id:t
+för användaren root. Om detta tilläts skulle en potentiell hackare som på något
+sätt fått tillgång till att exekvera detta program exempelvis kunna exekvera det
+med argumenten \mintinline[bgcolor=codebg]{sh}|/|,
+\mintinline[bgcolor=codebg]{sh}|0| och \mintinline[bgcolor=codebg]{sh}|/bin/sh|.
+Detta skulle restriktera programmet \mintinline[bgcolor=codebg]{sh}|/bin/sh| (en
+kommandoprompt) till mappen \mintinline[bgcolor=codebg]{sh}|/| (vilket är
+filsystemets rot och inkluderar därmed hela systemet) och köra det som
+användaren root. Detta skulle ge hackaren fri tillgång till att göra vad som än
+behagar denna med servern.
 
 Däremot är det fortfarande möjligt att göra detsamma med vilken annan användare
 som helst på servern. Därför bör detta program tillhöra en grupp vars enda
-medlem är användaren som måste exekvera programmet och sedan markeras som ej
-exekverbart av andra.
+medlem är användaren som måste exekvera programmet. Dessutom bör programmet
+sedan markeras som ej exekverbart för alla utanför denna grupp.
 
 För att åstadkomma detta samt det som tidigare beskrevs om \textit{setuid}-biten
 används följande kommandon:
@@ -355,17 +359,17 @@ skapandet av en användare med samma namn.
 
 \subsection{Isolering från kommunikation via internet}
 
-För att ansluta till exempelvis ``duckduckgo.com'', eller ``magnusson.space''
+För att ansluta till exempelvis ``duckduckgo.com'', eller ``magnusson.space'' \\
 krävs att en ``domännamnserver'' kontaktas och efterfrågas vilken IP-adress
 domännamnet tillhör.
-
+% styckesindelning här?
 Men för att först kunna kontakta domännamnservern måste dennas IP-adress vara
-känd, och detta sparas på datorn i en fil (oftast \texttt{/etc/resolve.conf}).
+känd, vilket sparas på datorn i en fil (oftast \texttt{/etc/resolve.conf}).
 Eftersom programmet redan är låst från filsystemet är detta därmed redan
 omöjligt.
-
+% styckesindelning här?
 Däremot finns det ännu inget som hindrar en användares program från att ansluta
-direkt till en IP-adress, som exempelvis ``79.125.108.55'', eller \\
+direkt till en IP-adress, som exempelvis ``79.125.108.55'' eller 
 ``51.68.174.117''.
 
 För att lösa detta testades först att återigen använda Docker. Den här gången
@@ -390,9 +394,13 @@ iptables -A INPUT --dport 48753 -j ALLOW
 iptables -A INPUT -j DROP
 \end{minted}
 
+% ip6tables osv?
+
 Detta blockerar all trafik som ska blockeras. Men den första raden blockerar
 inte bara alla nya anslutningar utåt, utan \textbf{all utgående trafik} och
 hindrar därmed containern från att rapportera tillbaka några resultat.
+
+% tillbaka resultat?
 
 Den slutliga lösningen som infördes involverar ej Docker. Istället skapas
 en ny användare på servern vid namnet \textit{judge-instance}, vars enda
@@ -456,6 +464,8 @@ JSON-objekt innehållande programmets källkod, språk, samt väsentlig informat
 om problemet programmet i fråga är gjort att lösa. Dessa JSON-objekt som skickas
 separeras på enskilda rader för att enkelt kunna dela upp dem och avgöra när ett
 meddelande är slut.
+
+% ta bort "men endast en i taget"? kanske ta emot fler anslutningar sekvensiellt?
 
 \subsubsection{Ta emot anslutningar}
 
@@ -901,7 +911,7 @@ Detta är väldigt långsamt och för att lösa detta implementerades en s.k.
 \textit{trådpool}. Programmets struktur blev då en \textit{huvudtråd} som tar
 emot förfrågningar och skickar dem vidare till de övriga.
 
-% snabb genomgång om vad en thread pool är?
+% snabb genomgång om vad en thread och thread pool är?
 
 Samtidigt är det väldigt viktigt att inte försöka köra för många användares
 program samtidigt, eftersom detta skulle medge att användares programs
@@ -985,7 +995,7 @@ Databasstrukturen beskrevs på papper med ett databasschema. Se
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.6\textwidth]{database-schema}
+	\includegraphics[width=0.9\textwidth]{database-schema}
 	\caption{Databasstruktur}\label{dbschema}
 \end{figure}
 
@@ -997,7 +1007,7 @@ värdena ``upp'' och ``ner''. ``status'', tillhörande ``Submits to'' motsvarar
 \subsubsection{Webbserver}
 \label{webbserver}
 
-% låååååååååång mening
+% låååååååååååååååååååååååååång mening
 
 Som tidigare nämnt valdes ramverket Sapper till att bygga webbservern. Sapper är
 speciellt i och med att all HTML genereras på servern när en användare först går
@@ -1015,7 +1025,7 @@ I användarens webbläsare sparas ett unikt identifikationsnummer och på
 webbservern en tabell med dessa identifikationsnummer kopplade till data om det
 inloggade kontot.
 
-% TODO: genomgång om feistelkrypto?
+% TODO: snabbgenomgång om feistelkrypto?
 
 För att undvika att behöva spara detta i webbservern valdes istället att spara
 denna data i kakan. Men för att göra detta säker krypterades kakan med det
@@ -1026,6 +1036,8 @@ avkryptering. Utöver själva datan krypteras även en slumpad uppsättning byte
 och tiden vid kryptering. På detta sätt kan en session ``ta slut'' om användaren
 exempelvis lämnar datorn. Dessutom resulterar samma krypterade data i olika
 kakor olika gånger.
+
+% förklara varför resultatet blir olika olika gånger
 
 Nedan följer funktionen som används för att kryptera kakorna.
 
@@ -1206,9 +1218,9 @@ anropas.
 
 \subsubsection{Webbsida}
 
-Sapper som använts till webbservern är sammankopplat med webbsideramverket
+Sapper, som använts till webbservern, är sammankopplat med webbsideramverket
 ``Svelte''. Detta medger att webbsidan måste vara byggd med Svelte. Sapper kan
-också ses som en utbyggnad av Sapper.
+också ses som en utbyggnad av Svelte.
 
 Nackdelen med att använda AJAX \--- \underline{a}synchronous
 \underline{J}avaScript \underline{a}nd \underline{X}ML, asynkron JavaScript och
@@ -1352,25 +1364,25 @@ Nedan följer ett fåtal bilder av den utvecklade produkten.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{problem}
+	\includegraphics[width=1\textwidth]{problem}
 	\caption{Visning av problem}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{submission}
+	\includegraphics[width=1\textwidth]{submission}
 	\caption{Visning av inlämning}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{problem-list}
+	\includegraphics[width=1\textwidth]{problem-list}
 	\caption{Lista av problem}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{create-problem}
+	\includegraphics[width=1\textwidth]{create-problem}
 	\caption{Skapandet av nytt problem}
 \end{figure}
 
