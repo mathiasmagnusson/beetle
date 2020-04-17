@@ -1,6 +1,6 @@
-# Badibabop
+# Beetle
 
-## Att göra
+## Todo
 
 * API:
   - [x] Register
@@ -37,9 +37,11 @@
   - [x] Set submission public / private
   - [x] Ranklist
   - [x] Submit solution
-  - [ ] Create problem
+  - [x] Create problem
   - [ ] Live submission status
   - [ ] Reset password
+  - [ ] Edit problem
+  - [ ] Validate problem `short_name`
 
 * Judge:
   - [x] Socket
@@ -50,16 +52,17 @@
   - [x] Send results back
   - [x] Measure time usage
   - [ ] Measure memory usage
+  - [ ] Measure time with something good, like `getrusage`
   - [x] Bind external libs etc into sandbox
 
 * Inlämmningsbara språk:
   - [x] c++
   - [x] c
+  - [ ] haskell
+  - [ ] rust
   - [ ] python3
   - [ ] python2
-  - [ ] rust
   - [ ] brainfuck
   - [ ] javascript (node)
   - [ ] wasm (wat)
   - [ ] java
-
