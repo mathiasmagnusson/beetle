@@ -86,12 +86,11 @@ papper och slogs sedan in i hålkort för testkörning (International Collegiate
 Programming Contest, Wikipedia).
 
 I Sverige har ``Programmeringsolympiaden'', en tävling för gymnasieelever,
-anordnats årligen sedan 1989. Denna är i sig en uttagning för det svenska laget
-till den internationella tävlingen ``International Olympiad in Informatics''.
-Dessa två, och åtskilligt många andra tävlingar använder sig utav onlineverktyg
-för att testköra och bedöma deltagarnas program.
-% använder sig av onlineverktyg?
-% de tävlandes program?
+anordnats årligen sedan 1989 (Om Programmeringsolympiaden, progolymp.se). Denna
+är i sig en uttagning för det svenska laget till den internationella tävlingen
+``International Olympiad in Informatics''.  Dessa två, samt åtskilligt många
+andra tävlingar använder sig av onlineverktyg för att testköra och bedöma de
+tävlandes program.
 
 Många av dessa onlineverktyg, som \href{https://open.kattis.com}{kattis.com},
 och \href{https://codefoces.com}{codeforces.com}, har även samlingar med problem
@@ -101,7 +100,8 @@ programmet löser uppgiften korrekt.
 
 Jag har själv ett intresse för tävlingsprogrammering och har deltagit i
 Programmeringsolympiadens final två gånger.
-% lagom skryt?
+
+% kombinera dessa två stycken? njaej...
 
 Av denna anledning har jag valt att tillägna detta projekt till att skapa just
 en sådan webbsida. Alltså en sida för programmeringsproblemlösning som testkör
@@ -127,7 +127,7 @@ förstå rapporten.
 \begin{itemize}
 	\item Hur exekveras opålitlig kod på ett säkert sätt? Alltså utan att en
 		illvillig användare har möjligheten att:
-		% kanske borde flytta det här?
+		% kanske borde flytta det här? Ingen har klagat...
 		\begin{itemize}
 			\item Läcka de specifika testdata som körs för att avgöra huruvida
 				användaren har klarat uppgiften.
@@ -145,14 +145,12 @@ förstå rapporten.
 
 \subsection{Metod}
 
-Inledningsvis undersöktes olika metoder för att köra användares program säkert.
-Sedan implementerades detta i form av ett litet program skrivet i
+Inledningsvis undersöktes olika metoder för att köra användares program säkert,
+vilket sedan implementerades i form av ett litet program skrivet i
 programmeringsspråket C. Därefter utvecklades en domare som kör detta program
 och avgör användarnas programs prestation. Efter detta utvecklades en webbserver
 som kommunicerar med domaren samt sparar all information i en databas. Slutligen
 utvecklades en webbapplikation som användaren interagerar med.
-
-% kombinera de två första meningarna
 
 \subsection{Material}
 
@@ -173,10 +171,6 @@ använts för att lagra projektet.
 På grund av tidsbrist har användares programs minnesallokeringsmängd inte mätts.
 Ej heller mäts körningstiden på ett helt konsekvent sätt.
 
-% \begin{itemize}
-% 	\item
-% \end{itemize}
-
 \section{Genomförande}
 
 \subsection{Planering}
@@ -193,8 +187,10 @@ program för körning. Docker är inte gjort att användas så och några proble
 skulle uppstå är:
 \begin{itemize}
 	\item Prestandakravet skulle bli onödigt högt, då tiden det tar att starta
-		en Docker-container är betydligt längre än det som krävs för att starta
-		ett vanligt program.
+		en Docker-container är betydligt längre än vad som krävs för att starta
+		ett vanligt program. (Däremot är det ett snabbare alternativ än
+		virtuella maskiner, då tiden det tar starta en Docker-container är ca
+		1 sekund på ett billigt webbhotell)
 	\item Om något skulle gå fel med webbservern när en användares program körs
 		finns risken att vissa containrar aldrig skulle bli avstängda och
 		borttagna.
@@ -210,8 +206,6 @@ isoleras: åtkomst till filsystemet, samt åtkomst till internet. Om båda dessa
 helt förhindrade är det enda ett program kan göra att läsa in data från dess
 inmatningsström, skriva ut data till dess utmatningsström, samt utföra
 beräkningar på denna data. Inget av detta utgör säkerhetsrisker.
-
-% skriv att en docker-instans iaf är snabbare än en vm?
 
 \subsection{Isolering från filsystem}
 
@@ -229,10 +223,11 @@ program. För att exempelvis köra ett program skrivet i Java krävs bland annat
 
 Nackdelen med att använda chroot är att endast användaren \textit{root} har
 tillgång till syscallet. Användaren root är datorns administratör och att
-exekvera an\-vändarens program som denna användare är i sig en stor säkerhetsrisk.
-Dessutom är det osäkert att programmet som startar användarens program kör som
-root, eftersom ett potentiellt säkerhetshål i detta program blir farligare då
-det bland annat har tillgång till att skriva och läsa alla filer på datorn.
+exekvera an\-vändarens program som denna användare är i sig en stor
+säkerhetsrisk.  Dessutom är det osäkert att programmet som startar användarens
+program kör som root, eftersom ett potentiellt säkerhetshål i detta program blir
+farligare då det bland annat har tillgång till att skriva och läsa alla filer på
+datorn.
 
 Lösningen som användes i detta projekt var att ha ett kort program vars enda
 uppgift är att använda chroot för att stänga in sig självt, ändra vilken
@@ -373,10 +368,10 @@ direkt till en IP-adress, som exempelvis ``79.125.108.55'' eller
 ``51.68.174.117''.
 
 För att lösa detta testades först att återigen använda Docker. Den här gången
-med dess argument \mintinline[bgcolor=codebg]{sh}|--net=none| vid skapandet av en container. Detta gör
-att containern inte får någon tillgång internet. Tyvärr krävs förmågan att kunna
-kommunicera med containern utifrån för att bland annat skicka in och ut testdata
-och svar.
+med dess argument \mintinline[bgcolor=codebg]{sh}|--net=none| vid skapandet av
+en container. Detta gör att containern inte får någon tillgång internet. Tyvärr
+krävs förmågan att kunna kommunicera med containern utifrån för att bland annat
+skicka in och ut testdata och svar.
 
 Sedan testades att använda programmet \textit{iptables}. Iptables kan användas
 för att konfigurera brandväggen och därmed filtrera bort viss trafik baserat på
@@ -394,13 +389,11 @@ iptables -A INPUT --dport 48753 -j ALLOW
 iptables -A INPUT -j DROP
 \end{minted}
 
-% ip6tables osv?
+% ip6tables o.dyl.?
 
 Detta blockerar all trafik som ska blockeras. Men den första raden blockerar
 inte bara alla nya anslutningar utåt, utan \textbf{all utgående trafik} och
 hindrar därmed containern från att rapportera tillbaka några resultat.
-
-% tillbaka resultat?
 
 Den slutliga lösningen som infördes involverar ej Docker. Istället skapas
 en ny användare på servern vid namnet \textit{judge-instance}, vars enda
@@ -432,8 +425,8 @@ grund av:
 		utvecklaren full kontroll över hur och när minne allokeras och frigörs,
 		samt möjligheten att skapa trådar på operativsystem-nivå.
 	\item Tillgången till bekväma funktionaliteter som oftast hittas i språk av
-		``högre nivå'' som exempelvis Haskell och Javascript. Ett exempel på detta
-		är lata iteratorer.
+		``högre nivå'' som exempelvis Haskell och Javascript. Ett exempel på
+		detta är lata iteratorer.
 	\item Rusts välfungerande och lättanvända byggsystem som automatiskt
 		laddar ner och kompilerar bibliotek som används av applikationen, samt
 		det stora antalet bibliotek som finns tillgängligt via rusts
@@ -450,10 +443,10 @@ grund av:
 \subsubsection{Kommunikation med domare}
 
 Kommunikationsmetoden som valdes är att domaren skapar en \textit{TCP-socket}
-där den lyssnar på anslutningar. Den skulle kunna ta emot fler anslutningar, men
-endast en i taget. Därmed krävs ej att domaren startas om när webbservern som
-ansluter till den (vilken beskrivs i sektion \ref{webbserver}) gör det. Däremot
-krävs ej flera anslutningar samtidigt eftersom endast en webbserver körs.
+där den lyssnar på fler anslutningar sekventiellt. Därmed krävs ej att domaren
+startas om när webbservern som ansluter till den (vilken beskrivs i sektion
+\ref{webbserver}) gör det. Däremot krävs ej flera anslutningar samtidigt
+eftersom endast en webbserver körs.
 
 Dataformatet som valdes är JSON, främst för att det är lätt att jobba med. Både
 för hand, i Rust med biblioteket \textit{serde\_json}, och i JavaScript, som
@@ -464,8 +457,6 @@ JSON-objekt innehållande programmets källkod, språk, samt väsentlig informat
 om problemet programmet i fråga är gjort att lösa. Dessa JSON-objekt som skickas
 separeras på enskilda rader för att enkelt kunna dela upp dem och avgöra när ett
 meddelande är slut.
-
-% ta bort "men endast en i taget"? kanske ta emot fler anslutningar sekvensiellt?
 
 \subsubsection{Ta emot anslutningar}
 
@@ -512,7 +503,8 @@ ansluten till klienten skickas in till funktionen
 
 \mintinline[bgcolor=codebg]{sh}|handle_connection| använder en
 \mintinline[bgcolor=codebg]{sh}|BufReader| och dess metod
-\mintinline[bgcolor=codebg]{sh}|lines| för att iterera över varje textrad av data som tagits emot.
+\mintinline[bgcolor=codebg]{sh}|lines| för att iterera över varje textrad av
+data som tagits emot.
 
 \begin{listing}[H]
 	\caption{Funktionen som hanterar anslutningar}
@@ -530,10 +522,10 @@ ansluten till klienten skickas in till funktionen
 \subsubsection{Hantera meddelanden}
 
 I for-loopen används biblioteken \textit{serde\_json} och dess funktion
-\mintinline[bgcolor=codebg]{sh}|from_str| för att konvertera meddelandet till datastrukturen
-\mintinline[bgcolor=codebg]{sh}|Submission|, en inlämning. Om detta inte går skrivs meddelandet ut till
-konsollen för lättare felsökning och ett felmeddelande skickas tillbaka i
-socketen.
+\mintinline[bgcolor=codebg]{sh}|from_str| för att konvertera meddelandet till
+datastrukturen \mintinline[bgcolor=codebg]{sh}|Submission|, en inlämning. Om
+detta inte går skrivs meddelandet ut till konsollen för lättare felsökning och
+ett felmeddelande skickas tillbaka i socketen.
 
 \begin{listing}[H]
 	\caption{Konvertering av meddelande}
@@ -763,8 +755,8 @@ och testfallets indata skrivs till programmet.
 
 Sedan inväntar domaren att användarens program körs färdigt och stänger ner sig
 självt, eller att den max tillåtna tiden tar slut. Funktionen
-\mintinline[bgcolor=codebg]{sh}|yield_now| används för att förhindra att loopen körs för fort och tar
-upp processorns tid och kraft.
+\mintinline[bgcolor=codebg]{sh}|yield_now| används för att förhindra att loopen
+körs för fort och tar upp processorns tid och kraft.
 
 \begin{listing}[H]
 	\caption{Användarens program låts köras}
@@ -907,17 +899,25 @@ Detta program är väldigt snabbt, men när en användares program testkörs kan
 detta i vanliga situationer ta uppemot tio sekunder. (En testkörning kan ofta ta
 nästan en sekund och ett problem kan rimligtvis har drygt tio testfall).
 
-Detta är väldigt långsamt och för att lösa detta implementerades en s.k.
-\textit{trådpool}. Programmets struktur blev då en \textit{huvudtråd} som tar
-emot förfrågningar och skickar dem vidare till de övriga.
+Detta är väldigt långsamt och för att lösa detta användes \textit{flertrådning}.
+En möjlig variant skulle vara att starta en ny tråd för varje program som ska
+köras och sedan stänga ner tråden när bedömningen är klar. I detta fall skulle
+dock ett arbiträrt antal program kunna köras samtidigt, vilket både skulle leda
+till att det blir lätt att överbelasta servern, samt att användarnas programs
+körningstid skulle bero på hur många program som körs samtidigt.
 
-% snabb genomgång om vad en thread och thread pool är?
+Istället implementerades en s.k. \textit{trådpool}. Detta är ett designmönster
+där programmet har en \textit{huvudtråd}, samt ett bestämt antal
+\textit{arbetartrådar}. När det finns arbete att utföra lägger huvudtråden detta
+arbete i en \textit{uppgiftskö}. Arbetartrådarna tar dessa arbeten ut kön, utför
+arbetet, meddelar resultatet och återgår sedan till kön för att invänta ett nytt
+arbete. Detta är även snabbare eftersom det tar tid att skapa och stänga ner
+trådar.
 
-Samtidigt är det väldigt viktigt att inte försöka köra för många användares
-program samtidigt, eftersom detta skulle medge att användares programs
-körningstid skulle bero på hur många som skickas in och körs samtidigt.
+Programmets struktur blev då en huvudtråd som tar emot förfrågningar och
+arbetartrådar som bedömer program och rapporterar tillbaka resultat.
 
-Därför bestämdes att antalet trådar i trådpoolen ska vara ett mindre än antalet
+Det bestämdes att antalet trådar i trådpoolen ska vara ett mindre än antalet
 kärnor i processorn. På så sätt blir en tråd ledig till webbservern (se
 sektion \ref{webbserver}) och domarens huvudtråd, medan resten används av
 användarnas program och att skicka tillbaka resultat till webbservern.
@@ -925,7 +925,8 @@ användarnas program och att skicka tillbaka resultat till webbservern.
 Självklart används även processorns krafter till andra program på servern men
 denna lösning fungerar bra i de flesta fallen.
 
-Först utökas \mintinline[bgcolor=codebg]{sh}|main|funktionen så att den startar trådpoolen.
+Först utökas \mintinline[bgcolor=codebg]{sh}|main|funktionen så att den startar
+trådpoolen.
 
 \begin{listing}[H]
 	\caption{En trådpool skapas}
@@ -969,7 +970,7 @@ För detta behövs en databas, en webbserver, samt en webbplats. Databasen
 skapades med MySQL, eftersom det var den enda sortens databas det fanns
 erfarenhet och kunskap inom.
 
-För implementationen av webbservern och och -platsen övervägdes det mellan två
+För implementationen av webbservern och -platsen övervägdes det mellan två
 alternativ:
 
 \begin{enumerate}
@@ -1007,13 +1008,12 @@ värdena ``upp'' och ``ner''. ``status'', tillhörande ``Submits to'' motsvarar
 \subsubsection{Webbserver}
 \label{webbserver}
 
-% låååååååååååååååååååååååååång mening
-
 Som tidigare nämnt valdes ramverket Sapper till att bygga webbservern. Sapper är
-speciellt i och med att all HTML genereras på servern när en användare först går
-in på sidan, men när något senare händer, som att användaren går till en annan
-del av sidan, uppdateras HTML:en med JavaScript i webbläsaren och ny data hämtas
-med AJAX om det behövs.
+speciellt i och med att HTML:en genereras av JavaScript, och detta sker både på
+servern och i webbläsaren beroende på situation. När en användare först går in
+på sidan genereras allt på servern. I andra fall, som när användaren går till en
+annan del av sidan, används AJAX för att hämta eventuell data och nödvändig HTML
+genereras i webbläsaren och ersätter endast de delar av sidan som ändras.
 
 \paragraph{Sessioner}
 
@@ -1028,16 +1028,14 @@ inloggade kontot.
 % TODO: snabbgenomgång om feistelkrypto?
 
 För att undvika att behöva spara detta i webbservern valdes istället att spara
-denna data i kakan. Men för att göra detta säker krypterades kakan med det
+denna data i kakan. Men för att göra detta säkert krypterades kakan med det
 symmetriska ``Feistelkryptot''. Detta gör det omöjligt för en illvillig
 användare att både läsa datan i kakan och försöka ändra datan i den så länge
 denne inte har tillgång till de hemliga nycklarna som används vid kryptering och
 avkryptering. Utöver själva datan krypteras även en slumpad uppsättning bytes
 och tiden vid kryptering. På detta sätt kan en session ``ta slut'' om användaren
-exempelvis lämnar datorn. Dessutom resulterar samma krypterade data i olika
-kakor olika gånger.
-
-% förklara varför resultatet blir olika olika gånger
+exempelvis lämnar datorn. Dessutom resulterar samma sessionsdata i olika
+krypterade kakor olika gånger.
 
 Nedan följer funktionen som används för att kryptera kakorna.
 
@@ -1423,10 +1421,8 @@ Alltså mäts körningstiden, men inte nödvändigvis helt konsekvent.
 Mätning av minnesallokeringsmängden hann jag tyvärr inte implementera. Det
 verkar som att två alternativ finns: kontrollera detta konstant, om och om igen,
 eller att använda \textit{getrusage}, vilket bland annat ger ``det maximala
-antalet kilobytes fysiskt minne programmet använde samtidigt''.
-(\href{https://www.gnu.org/savannah-checkouts/gnu/libc/manual/html_node/Resource-Usage.html#Resource-Usage}{GNUs
-dokumentation av \textit{getrusage}}). Då stöter man dock på samma problem som
-med att mäta tiden.
+antalet kilobytes fysiskt minne programmet använde samtidigt''. Då stöter man
+dock på samma problem som med att mäta tiden.
 
 \subsection{
 	Hur implementeras en både tillfredsställande och säker användarupplevelse?
@@ -1447,18 +1443,48 @@ den är lite snabbare, eftersom den inte kräver ett databasuppslag. Anledningen
 till att jag valde denna implementation var främst för att det verkade roligt
 att göra.
 
-En annan populär lösning är att använda s.k. \href{https://jwt.io}{JSON Web
-Tokens}. Dessa fungerar väldigt likt det jag själv implementerade, med den
-huvudsakliga skillnaden att de vanligtvis inte krypteras. Samtidigt ville jag
-inte att användaren skulle få veta vad som sparas i dess session. Det största
-biblioteket, \textit{jsonwebtoken}, till node har inte stöd för kryptering och
-när jag bestämde mig för detta kände jag inte till att ett annat bibliotek
-fanns, som har stöd för krypering.
+En annan populär lösning är att använda s.k. JSON Web Tokens. Dessa fungerar
+väldigt likt det jag själv implementerade, med den huvudsakliga skillnaden att
+de vanligtvis inte krypteras. Samtidigt ville jag inte att användaren skulle få
+veta vad som sparas i dess session. Det största biblioteket,
+\textit{jsonwebtoken}, till node har inte stöd för kryptering och när jag
+bestämde mig för detta kände jag inte till att ett annat bibliotek fanns, som
+har stöd för krypering.
 
 \section{Referenser}
 
 \begin{itemize}
-	\item Mathias hjärna (2001)
+	\item Competetive Programming, Wikipedia \\
+		\url{https://en.wikipedia.org/wiki/Competitive_programming}
+	\item International Collegiate Programming COntest, Wikipedia \\
+		\url{https://en.wikipedia.org/wiki/International_Collegiate_Programming_Contest}
+	\item Programmeringsolymnpiaden \url{https://www.progolymp.se/}
+	\item Kattis öppna problemsamlig \url{https://open.kattis.com/}
+	\item Codeforces \url{https://codeforces.com/}
+	\item Dockers dokumentation \url{https://docs.docker.com/get-docker/}
+	\item GCC \url{https://gcc.gnu.org/}
+	\item Manualen för chroot \\
+		\url{http://man7.org/linux/man-pages/man2/chroot.2.html}
+	\item Säkerhet runt chroot \\
+		\url{https://filippo.io/escaping-a-chroot-jail-slash-1/}
+	\item Manualen för iptables \\
+		\url{https://linux.die.net/man/8/iptables}
+	\item Rusts webbsida \url{https://rust-lang.org}
+	\item Rusts standardbibioteks dokumentation \\
+		\url{https://doc.rust-lang.org/std/}
+	\item Serdes dokumentation \url{https://docs.serde.rs/serde/}
+	\item Trådpool \url{https://en.wikipedia.org/wiki/Thread_pool}
+	\item Node.js dokumentation \\
+		\url{https://nodejs.org/dist/latest-v13.x/docs/api/}
+	\item Expressjs dokumentation \url{https://expressjs.com/en/4x/api.html}
+	\item Sappers dokumentation \url{https://sapper.svelte.dev/}
+	\item Feistelkrypto \url{https://en.wikipedia.org/wiki/Feistel_cipher} och
+		\\ \url{https://www.youtube.com/watch?v=FGhj3CGxl8I}
+	\item Guide för getrusage
+		\url{https://www.gnu.org/software/libc/manual/html_node/Resource-Usage.html}
+	\item Manualen för getrusage
+		\url {https://linux.die.net/man/2/getrusage}
+	\item JSON Web Tokens \url{https://jwt.io}
 \end{itemize}
 
 \section{Bilagor}
