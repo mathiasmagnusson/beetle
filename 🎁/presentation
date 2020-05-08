@@ -1,0 +1,269 @@
+Beetle
+
+Webbsida för programmeringsproblemlösning
+» Testkör användares program
+» Avgör korrekthet och körningstid
+
+
+Syfte
+
+"[...] skapa en webbsida där användaren ska kunna öva på
+programmeringsproblemlösning och därmed få en förståelse
+för hur en säker webbserver skapas samt hur opålitlig kod
+kan exekveras på ett säkert sätt."
+
+
+Bakgrund
+
+First Annual Texas Collegiate
+Programming Championship
+
+» Fortran
+» För hand -> Hålkort
+
+Programmeringsolympiaden
+
+kattis.com
+
+Öppen problemsamling
+open.kattis.com
+
+Eget intresse
+Final två gånger
+
+\
+
+
+Frågeställningar
+
+» Hur exekveras opålitlig kod på ett säkert sätt? Alltså
+  utan att en illvillig användare har möjligheten att:
+\
+    - Läcka de specifika testdata som körs för
+      att avgöra huruvida användaren har klarat uppgiften.
+\
+    - Komma åt känslig användardata.
+\
+    - På övrigt sätt utnyttja servern där webbsidan hostas.
+
+» Hur mäts ett programs körningstid
+   samt på ett konsekvent sätt?
+
+» Hur implementeras en både tillfredsställande
+   och säker användarupplevelse?
+
+
+Avgränsningar
+
+» Begränsat fokus på utseende
+
+» Mäter ej minnesallokeringsmängd
+
+» Inget stöd för "valideringsskript"
+
+
+Metod
+
+C
+
+Rust
+
+Sapper + Svelte
+
+git + github
+
+@how-stuff-works.png
+
+Säker exekvering av opålitliga program
+
+» Åtkomst till filersystem
+» Åtkomst till nätverk
+
+Isolering från filsystem
+
+Vissa filer krävs
+
+/etc/ld.so.cache
+/etc/localtime
+/etc/nsswitch.conf
+/etc/passwd
+/home/mathias/dev/beetle/Test.class
+/lib/x86_64-linux-gnu/libc.so.6
+/lib/x86_64-linux-gnu/libdl.so.2
+/lib/x86_64-linux-gnu/libgcc_s.so.1
+/lib/x86_64-linux-gnu/libm.so.6
+/lib/x86_64-linux-gnu/libnss_files.so.2
+/lib/x86_64-linux-gnu/libpthread.so.0
+/lib/x86_64-linux-gnu/librt.so.1
+/lib/x86_64-linux-gnu/libstdc++.so.6
+/lib/x86_64-linux-gnu/libz.so.1
+/sys/devices/system/cpu/online
+/sys/fs/cgroup/cpu,cpuacct/user.slice/cpu.cfs_period_us
+/sys/fs/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us
+/sys/fs/cgroup/cpu,cpuacct/user.slice/cpu.shares
+/sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory.limit_in_bytes
+/sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory.stat
+/sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory.use_hierarchy
+/usr/bin/java
+/usr/lib/jvm/java-11-openjdk-amd64/lib/jli/libjli.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/jvm.cfg
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libjava.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libjimage.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libnet.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libnio.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libverify.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/libzip.so
+/usr/lib/jvm/java-11-openjdk-amd64/lib/modules
+/usr/lib/jvm/java-11-openjdk-amd64/lib/server/classes.jsa
+/usr/lib/jvm/java-11-openjdk-amd64/lib/server/libjvm.so
+/usr/lib/locale/locale-archive
+/usr/share/java/java-atk-wrapper.jar
+
+# För statisk länkat c-program:
+\
+
+chroot
+
+Endast root kan köra chroot
+
+Säkerhetsrisk
+
+setuid-biten
+
+setuid
+
+execve
+
+"executor"
+
+C
+
+@executor.png
+
+executor / 0 /bin/sh
+
+sudo chown root:judge-daemon executor
+sudo chmod 4750 executor
+
+Isolering från nätverk
+
+Domännamn
+» beetle.magnusson.space
+» localhost
+
+IP-adress
+» 51.68.174.117
+» 127.0.0.1
+
+iptables
+
+iptables -A OUTPUT -m owner --uid-owner judge-instance -j DROP
+
+id -u judge-instance
+
+
+Domarsystem
+
+@rust.png
+
+» Kontroll på "låg nivå"
+» Bekvämlighet av "hög nivå"
+» Bra byggsystem
+» Kompileras till maskinkod
+» Strikt (och bra) typsystem
+
+543 rader
+
+» TCP-socket
+» JSON
+
+@submission-struct.png
+
+» Skapa temporär mapp
+» Kopiera in filer som krävs
+» Kompilera programmet
+» Loopa genom test_cases
+    - Starta tidsmätning
+    - Kör programmet via executor
+    - Skicka in indata
+    - Mät tiden
+    - Kontrollera utdata
+    - Rapportera resultat
+
+@iamspeed.jpeg
+
+Flertrådning
+
+Trådpool
+
+
+Webbapplikation
+
+» MySQL
+» Sapper + Svelte
+
+@database-schema.png
+
+Sapper
+» SPA
+» AJAX + SSR
+
+Sessioner
+
+JWT?
+
+@reinvent-wheel.png
+
+Feistelkrypto
+
+@feistel.png
+
+@login-route.png
+
+bcrypt
+
+@problem-route.png
+
+Svelte
+
+@register-route-js.png
+
+@register-route-html.png
+
+@register-route-css.png
+
+Resultat
+
+Mycket nice
+
+Endast C & C++
+
+Demo-tajm
+
+Diskussion / Slutsats
+
+@thumbsup.jpeg
+
+» Hur exekveras opålitlig kod på ett säkert sätt? Alltså
+  utan att en illvillig användare har möjligheten att:
+\
+    - Läcka de specifika testdata som körs för
+      att avgöra huruvida användaren har klarat uppgiften.
+\
+    - Komma åt känslig användardata.
+\
+    - På övrigt sätt utnyttja servern där webbsidan hostas.
+
+» Hur mäts ett programs körningstid
+  samt på ett konsekvent sätt?
+
+getrusage
+
+» Hur implementeras en både tillfredsställande
+  och säker användarupplevelse?
+
+» Sessioner
+» Hash + Salt
+» Allt annat i rapporten
+
+\
