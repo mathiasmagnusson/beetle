@@ -111,14 +111,9 @@ Tredje året hände samma sak. Jag kvalade mig vidare till finalen med exakt det
 antal poäng som sattes som kvalgräns. Denna gång gick det dock betydligt mycket
 bättre och jag kom på 11:e plats.
 
-
-
-Jag har själv ett intresse för tävlingsprogrammering och har deltagit i
-Programmeringsolympiadens final två gånger.
-
-Av denna anledning har jag valt att tillägna detta projekt till att skapa just
-en sådan webbsida. Alltså en sida för programmeringsproblemlösning som testkör
-användares program.
+Detta har väckt mitt intresse för tävlingsprogrammering och därav har jag valt
+att tillägna detta projekt till att skapa just ett sådant onlineverktyg. Alltså
+en sida för programmeringsproblemlösning som testkör användares program.
 
 \subsection{Rekommenderade kunskaper}
 
@@ -181,8 +176,12 @@ använts för att lagra projektet.
 
 \subsection{Avgränsningar}
 
-På grund av tidsbrist har användares programs minnesallokeringsmängd inte mätts.
-Ej heller mäts körningstiden på ett helt konsekvent sätt.
+Denna rapport och projektet som helhet har ett mycket begränsat fokus på
+webbsidans utseende.
+
+Det enda sättet att validera inlämnade programs svar är att jämföra utdatan med
+en viss förbestämd `rätt' utdata. Stöd för problem med \textit{fler} rätta svar
+finns alltså inte.
 
 \section{Genomförande}
 
@@ -232,7 +231,7 @@ filsystemets som än önskas kan tillgängliggöras. Den stora fördelen med den
 flexibilitet är att åtkomst till flertalet filer kan krävas för att köra vissa
 program. För att exempelvis köra ett program skrivet i Java krävs bland annat en
 \textit{Java virtual machine}, samt ytterligare några bibliotek som
-\textit{JVM}en laddar in när den körs.
+\textit{JVM}:en laddar in när den körs.
 
 Nackdelen med att använda chroot är att endast användaren \textit{root} har
 tillgång till syscallet. Användaren root är datorns administratör och att
@@ -1427,9 +1426,8 @@ nuvaranda processen eller för samtilga ``barnprocesser'' samtidigt (med
 syscallet \textit{getrusage}). Det skulle möjligvis gå att göra detta från
 \textit{executor}, men då skulle ej \textit{execve} kunna användas, eftersom
 funktionen aldrig returnerar. Det är därför inte möjligt att helt enkelt mäta
-tiden det tog efter att användarens program exekveras klart.
-
-Alltså mäts körningstiden, men inte nödvändigvis helt konsekvent.
+tiden det tog efter att användarens program exekveras klart. Alltså mäts
+körningstiden, men inte nödvändigvis helt konsekvent.
 
 Mätning av minnesallokeringsmängden hann jag tyvärr inte implementera. Det
 verkar som att två alternativ finns: kontrollera detta konstant, om och om igen,
