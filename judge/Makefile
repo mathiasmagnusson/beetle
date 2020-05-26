@@ -1,3 +1,7 @@
+beetle-judge:
+	cargo build --release
+	mv target/release/$@ ./
+
 executor: executor.c
 	gcc -O3 -o $@ $^
 
