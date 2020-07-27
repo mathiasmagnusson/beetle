@@ -15,7 +15,7 @@
 \renewcommand*\listoflistingscaption{6.2 Kodavsnitt}
 
 \renewcommand*\listingscaption{Kodavsnitt}
-\renewcommand*\figurename{Bilaga}
+\renewcommand*\figurename{Bild}
 
 \newcommand*\coderef[1]{\listingscaption~\ref{#1}}
 
@@ -44,21 +44,23 @@
 \begin{par}
 
 \itshape
-This report describes methods used to execute untrusted code in a safe
-environment. This is then used to describe an implementation of a judge system
-that automates the process of continually receiving users' programs accompanied
-by data describing an exercise in problem solving, and then evaluating the
-program's correctness. Additionally, a web application and server is created to
-serve as an interface between users and this judge, as well as storing
-information about available problems and registered users.
+This report describes the full process of creating a web application which
+allows its users to practice `programming problem solving'. The web application
+does this by hosting a database of exercises as well as accepting users'
+programs to test run and evalute their correctness and performance.
 
-The majority of this report describes how all of the above was, and can be,
-implemented. Both text describing all methods used, as well as code snippets and
-commands showing parts of the actual implementation is included.
+The beginning of the report is focused on executing the users' programs in a
+safe environment to prevent any malicious activity. Thereafter, the creation of
+a database, a front end website, and a web server binding all parts of the
+project together is described.
 
-The main focus of the report lies on executing untrusted code. Less focus lies
-on the web application and server, but it is still included and roughly
-described.
+All methods used to develop this project is described in text. Additionally,
+code snippets are included to further clarify how the used methods are
+implemented.
+
+The results of this project were successful, although there is still room for
+improvement. Further details of the results are shown and discussed towards the
+end of this report.
 
 \end{par}
 
@@ -127,8 +129,8 @@ försök att efterlikna arbetet som här presenteras, rekommenderas läsaren att
 	\item samt känna till vad en brandvägg är.
 \end{itemize}
 
-Detta är dock ej krav och meningen är att det fortfarande ska vara möjligt att
-förstå rapporten.
+Dessa är dock ej krav och meningen är att det ska vara möjligt att förstå
+rapporten även utan dessa kunskaper.
 
 \subsection{Frågeställningar}
 
@@ -269,7 +271,7 @@ programmet exekverades direkt.
 
 För att implementera allt detta valdes under detta projekt att skapa ett kort
 program i språket C. Via programmets argument får det information om vilken mapp
-den ska restriktera sig till, vilket program den ska exekvera, samt vilken
+den ska begränsa sig till, vilket program den ska exekvera, samt vilken
 användare programmet ska köras som. Programmet kommer härifrån refereras till
 som \textit{executor}. Nedan följer källkoden för programmet:
 
@@ -336,13 +338,17 @@ som \textit{executor}. Nedan följer källkoden för programmet:
 	}
 \end{minted}
 
+\begin{listing}[H]
+	\caption{Komplett källkod för executor}
+\end{listing}
+
 Viktigt att notera är att programmet inte tillåter att köra program med
 användar-id:t \mintinline[bgcolor=codebg]{sh}|0|, vilket alltid är användar-id:t
 för användaren root. Om detta tilläts skulle en potentiell hackare som på något
 sätt fått tillgång till att exekvera detta program exempelvis kunna exekvera det
 med argumenten \mintinline[bgcolor=codebg]{sh}|/|,
 \mintinline[bgcolor=codebg]{sh}|0| och \mintinline[bgcolor=codebg]{sh}|/bin/sh|.
-Detta skulle restriktera programmet \mintinline[bgcolor=codebg]{sh}|/bin/sh| (en
+Detta skulle begränsa programmet \mintinline[bgcolor=codebg]{sh}|/bin/sh| (en
 kommandoprompt) till mappen \mintinline[bgcolor=codebg]{sh}|/| (vilket är
 filsystemets rot och inkluderar därmed hela systemet) och köra det som
 användaren root. Detta skulle ge hackaren fri tillgång till att göra vad som än
@@ -368,16 +374,12 @@ skapandet av en användare med samma namn.
 
 För att ansluta till exempelvis ``duckduckgo.com'', eller ``magnusson.space'' \\
 krävs att en ``domännamnserver'' kontaktas och efterfrågas vilken IP-adress
-domännamnet tillhör.
-% styckesindelning här?
-Men för att först kunna kontakta domännamnservern måste dennas IP-adress vara
-känd, vilket sparas på datorn i en fil (oftast \texttt{/etc/resolve.conf}).
-Eftersom programmet redan är låst från filsystemet är detta därmed redan
-omöjligt.
-% styckesindelning här?
-Däremot finns det ännu inget som hindrar en användares program från att ansluta
-direkt till en IP-adress, som exempelvis ``79.125.108.55'' eller 
-``51.68.174.117''.
+domännamnet tillhör. För att först kunna kontakta domännamnservern måste dennas
+IP-adress vara känd. Denna adress sparas på datorn i en fil (oftast
+\texttt{/etc/resolve.conf}).  Eftersom programmet redan är låst från filsystemet
+är detta därmed redan omöjligt. Däremot finns det ännu inget som hindrar en
+användares program från att ansluta direkt till en IP-adress, som exempelvis
+``79.125.108.55'' eller ``51.68.174.117''.
 
 För att lösa detta testades först att återigen använda Docker. Den här gången
 med dess argument \mintinline[bgcolor=codebg]{sh}|--net=none| vid skapandet av
@@ -403,7 +405,7 @@ iptables -A INPUT -j DROP
 
 % ip6tables o.dyl.?
 
-Detta blockerar all trafik som ska blockeras. Men den första raden blockerar
+Detta blockerar all trafik som ska blockeras. Dock blockerar den första raden
 inte bara alla nya anslutningar utåt, utan \textbf{all utgående trafik} och
 hindrar därmed containern från att rapportera tillbaka några resultat.
 
@@ -1003,8 +1005,7 @@ Trots detta valdes Sapper. Främst tack vare dess hastighet.
 
 \subsubsection{Databas}
 
-Databasstrukturen beskrevs på papper med ett databasschema. Se
-\figurename{}~\ref{dbschema}.
+Databasstrukturen planerades och bestämdes. Se ER-diagrammet i bilden nedan:
 
 \begin{figure}[H]
 	\centering
@@ -1032,7 +1033,7 @@ genereras i webbläsaren och ersätter endast de delar av sidan som ändras.
 För att webbapplikationen ska erbjuda en användarvänlig upplevelse bestämdes att
 spara en användares ``session'' efter att denna loggat in.
 
-För att åstadkomma detta på ett säkert sätt används oftast en ``sessionskaka''.
+För att åstadkomma detta på ett säkert sätt används oftast en ``sessions-kaka''.
 I användarens webbläsare sparas ett unikt identifikationsnummer och på
 webbservern en tabell med dessa identifikationsnummer kopplade till data om det
 inloggade kontot.
@@ -1040,7 +1041,7 @@ inloggade kontot.
 % TODO: snabbgenomgång om feistelkrypto?
 
 För att undvika att behöva spara detta i webbservern valdes istället att spara
-denna data i kakan. Men för att göra detta säkert krypterades kakan med det
+denna data i kakan. För att göra detta säkert krypterades kakan med det
 symmetriska ``Feistelkryptot''. Detta gör det omöjligt för en illvillig
 användare att både läsa datan i kakan och försöka ändra datan i den så länge
 denne inte har tillgång till de hemliga nycklarna som används vid kryptering och
@@ -1058,17 +1059,11 @@ Nedan följer funktionen som används för att kryptera kakorna.
 			let rand = crypto.randomBytes(randSize);
 			let date = Date.now().toString();
 			let payload = Buffer.from(JSON.stringify(token));
-
 			let data = Buffer.concat([
-				rand,
-				Buffer.from(date),
-				Buffer.from([0]),
-				payload,
+				rand, Buffer.from(date), Buffer.from([0]), payload,
 			]);
-
 			if (data.length % 2)
 				data = Buffer.concat([data, Buffer.from([0])]);
-
 			let l = data.slice(0, data.length / 2);
 			let r = data.slice(data.length / 2, data.length);
 			for (let key of keys.slice(0, keys.length - 1)) {
@@ -1080,7 +1075,6 @@ Nedan följer funktionen som används för att kryptera kakorna.
 				l = nl;
 				r = nr;
 			}
-
 			let f = crypto.createHash("sha512")
 				.update(Buffer.concat(
 					[Buffer.from(keys[keys.length - 1]), r]
@@ -1093,7 +1087,8 @@ Nedan följer funktionen som används för att kryptera kakorna.
 	\end{minted}
 \end{listing}
 
-Avkrypteringen fungerar likadant, fast bakvänt.
+Avkrypteringen fungerar likadant, fast nycklarna itereras genom i omvänd
+ordning.
 
 \paragraph{Ändpunkter}
 
@@ -1244,11 +1239,11 @@ sådan rutt direkt körs denna funktion redan på servern. Om funktionen hämtar
 data från samma server görs detta med ett vanligt funktionsanrop. Denna data
 skickas då med samtidigt som resten av sidan skickas.
 
-Men om användaren går från en rutt till en annan genom att följa en hyperlänk
-behöver inte hela sidan ladda om, utan Sapper ser till att endast den nya
-HTML:en, CSS:en, JavaScripten och datan som krävs hämtas från servern. I detta
-fall körs den omtalade funktionen på webbläsaren. Samma funktion kan alltså både
-köras på servern och i webbläsaren.
+Om användaren å andra sidan går från en rutt till en annan genom att följa en
+hyperlänk behöver inte hela sidan ladda om, utan Sapper ser till att endast den
+nya HTML:en, CSS:en, JavaScripten och datan som krävs hämtas från servern. I
+detta fall körs den omtalade funktionen på webbläsaren. Samma funktion kan
+alltså både köras på servern och i webbläsaren.
 
 Svelte i sig är ett ramverk som låter utvecklaren dela upp webbsidan i olika
 komponenter som hanterar sig själva. En komponent består av tre huvuddelar:
@@ -1402,6 +1397,11 @@ I sin helhet anser jag att projektet blev lyckat. Tyvärr blev webbsidan lite
 bristfällig på vissa områden, som t.ex. första sidan som visas. Denna är i
 princip helt tom.
 
+Överlag har jag lärt mig mycket under skapandet av detta projekt, speciellt om
+IT-säkerhet, men också en del om C-programmering för Linux och
+SQL-databashantering. Speciellt gällande hur man konstruerar SQL-frågor för
+databaser med lite mer komplicerade relationer.
+
 \subsection{Hur exekveras opålitlig kod på ett säkert sätt?}
 
 Med användningen av chroot, ändring till en annan användare samt
@@ -1422,12 +1422,12 @@ Ett stort problem är dock att denna domare mäter den riktiga tid som passerar
 från att användarens program startas till att den avslutas. Istället går det
 även att mäta just tiden som spenderats till att exekvera ett visst program.
 Från vad jag hittat så verkar det endast möjligt att mäta detta för den
-nuvaranda processen eller för samtilga ``barnprocesser'' samtidigt (med
+nuvarande processen eller för samtliga ``barnprocesser'' samtidigt (med
 syscallet \textit{getrusage}). Det skulle möjligvis gå att göra detta från
 \textit{executor}, men då skulle ej \textit{execve} kunna användas, eftersom
 funktionen aldrig returnerar. Det är därför inte möjligt att helt enkelt mäta
 tiden det tog efter att användarens program exekveras klart. Alltså mäts
-körningstiden, men inte nödvändigvis helt konsekvent.
+körningstiden, men inte nödvändigtvis helt konsekvent.
 
 Mätning av minnesallokeringsmängden hann jag tyvärr inte implementera. Det
 verkar som att två alternativ finns: kontrollera detta konstant, om och om igen,
@@ -1435,9 +1435,8 @@ eller att använda \textit{getrusage}, vilket bland annat ger ``det maximala
 antalet kilobytes fysiskt minne programmet använde samtidigt''. Då stöter man
 dock på samma problem som med att mäta tiden.
 
-\subsection{
-	Hur implementeras en både tillfredsställande och säker användarupplevelse?
-}
+\subsection{Hur implementeras en både tillfredsställande och säker \\
+	användarupplevelse?}
 
 Sessioner är en bra kompromiss mellan säkerhet och smidighet för användaren. Att
 inte alls ha sessioner och istället kräva användarens lösenord varje gång denna
@@ -1465,44 +1464,77 @@ har stöd för krypering.
 \section{Referenser}
 
 \begin{itemize}
-	\item Competetive Programming, Wikipedia \\
+	\item Wikipedia, (u.å.). Competetive Programming. [online]
 		\url{https://en.wikipedia.org/wiki/Competitive_programming}
-	\item International Collegiate Programming COntest, Wikipedia \\
-		\url{https://en.wikipedia.org/wiki/International_Collegiate_Programming_Contest}
-	\item Programmeringsolymnpiaden \url{https://www.progolymp.se/}
-	\item Kattis öppna problemsamlig \url{https://open.kattis.com/}
-	\item Codeforces \url{https://codeforces.com/}
-	\item Dockers dokumentation \url{https://docs.docker.com/get-docker/}
-	\item GCC \url{https://gcc.gnu.org/}
-	\item Manualen för chroot \\
+		[30 mars 2020]
+
+	\item Wikipedia, (u.å.). International Collegiate Programming Contest.
+		[online] \url{https://en.wikipedia.org/wiki/International_Collegiate_Programming_Contest}
+		[30 mars 2020]
+
+	\item Programmeringsolympiaden, (u.å.). Om Programmeringsolympiaden.
+		[online] \url{https://www.progolymp.se/om/} [30 mars 2020]
+
+	\item Kattis, (u.å.). [online] \url{https://open.kattis.com/}
+
+	\item Codeforces, (u.å.) [online] \url{https://codeforces.com/}
+
+	\item Docker, (u.å.). Reference documentation $|$ Docker Documentation
+		[online] \url{https://docs.docker.com/reference/}
+
+	% \item GCC \url{https://gcc.gnu.org/}
+
+	\item man7.org, (2019). chroot(2) - Linux Manual Page. [online]
 		\url{http://man7.org/linux/man-pages/man2/chroot.2.html}
-	\item Säkerhet runt chroot \\
+
+	\item Valsorda, F., (2013). Escaping A Chroot Jail/1 $|$ Pytux. [online]
 		\url{https://filippo.io/escaping-a-chroot-jail-slash-1/}
-	\item Manualen för iptables \\
-		\url{https://linux.die.net/man/8/iptables}
-	\item Rusts webbsida \url{https://rust-lang.org}
-	\item Rusts standardbibioteks dokumentation \\
+		[29 januari 2020]
+
+	\item Eychenne, H., (u.å.). Iptables(8) - Linux Man Page. [online]
+		\url{https://linux.die.net/man/8/iptables} [januari 2020].
+
+	% \item Rusts webbsida \url{https://rust-lang.org}
+
+	\item doc.rust-lang.org, (u.å.). std - Rust. [online]
 		\url{https://doc.rust-lang.org/std/}
-	\item Serdes dokumentation \url{https://docs.serde.rs/serde/}
-	\item Trådpool \url{https://en.wikipedia.org/wiki/Thread_pool}
-	\item Node.js dokumentation \\
-		\url{https://nodejs.org/dist/latest-v13.x/docs/api/}
-	\item Expressjs dokumentation \url{https://expressjs.com/en/4x/api.html}
-	\item Sappers dokumentation \url{https://sapper.svelte.dev/}
-	\item Feistelkrypto \url{https://en.wikipedia.org/wiki/Feistel_cipher} och
-		\\ \url{https://www.youtube.com/watch?v=FGhj3CGxl8I}
-	\item Guide för getrusage
+
+	\item docs.serde.rs, (u.å.). serde - Rust. [online]
+		\url{https://docs.serde.rs/serde/}
+
+	% \item Wikipedia, (u.å.). Thread pool \url{https://en.wikipedia.org/wiki/Thread_pool}
+
+	\item nodejs.org, (2019). Index $|$ Node.js v13.14.0 Documentation.
+		[online] \url{https://nodejs.org/dist/latest-v13.x/docs/api/}
+
+	\item expressjs.com, (2017). Express 4.x - API Reference. [online]
+		\url{https://expressjs.com/en/4x/api.html}
+
+	\item Harris, R., (2020). Docs • Sapper. [online]
+		\url{https://sapper.svelte.dev/}
+
+	\item Wikipedia, (u.å.). Feistel cipher. [online]
+		\url{https://en.wikipedia.org/wiki/Feistel_cipher} [4 mars 2020]
+
+	\item Riley, S., (2020). Feistel Cipher [online]
+		\url{https://www.youtube.com/watch?v=FGhj3CGxl8I} [17 april 2020]
+
+	\item GNU, (u.å.). Resource Usage (The GNU C Library) [online]
 		\url{https://www.gnu.org/software/libc/manual/html_node/Resource-Usage.html}
-	\item Manualen för getrusage
-		\url {https://linux.die.net/man/2/getrusage}
-	\item JSON Web Tokens \url{https://jwt.io}
+
+	\item linux.die.net, (2001). getrusage(2): resource usage - Linux man page
+		[online] \url {https://linux.die.net/man/2/getrusage}
+
+	\item jwt.io, (u.å.). JSON Web Tokens - jwt.io [online]
+		\url{https://jwt.io}
+
 \end{itemize}
 
-\section{Bilagor}
+% \section{Bilagor}
 
-\listoffigures{}
+% \listoffigures{}
 
-\listoflistings{}
+% \listoflistings{}
 
 \section*{6.3 Komplett källkod \& Projektet}
 
