@@ -55,18 +55,41 @@
 	export async function preload(_page, session) {
 		const { lang } = session;
 
-		return { se: /sv/i.test(lang.split(",")[0] || "") };
+		const res = await this.fetch("/supported-languages.json");
+		const json = await res.json();
+		const supportedLanguages = Object
+			.values(json)
+			.map(lang => lang.name);
+
+		return {
+			se: /sv/i.test(lang.split(",")[0] || ""),
+			supportedLanguages,
+		};
 	}
 </script>
 
 <script>
+	export let se;
+	export let supportedLanguages;
+
+	let sLangForm = "";
+	$: {
+		sLangForm = "";
+		for (const i in supportedLanguages) {
+			sLangForm += supportedLanguages[i];
+			if (i < supportedLanguages.length - 2)
+				sLangForm += ", ";
+			else if (i == supportedLanguages.length - 2) {
+				sLangForm += (se ? " eller " : ", or ");
+			}
+		}
+	}
+
 	const seFlag = String.fromCodePoint(0x1f1f8)
 		+ String.fromCodePoint(0x1f1ea);
 
 	const usFlag = String.fromCodePoint(0x1f1fa)
 		+ String.fromCodePoint(0x1f1f8);
-
-	export let se;
 
 	function switchLang() {
 		se = !se;
@@ -119,7 +142,7 @@
 			</p>
 			<p>
 				För tillfället är det endast möjligt att lämna in lösningar
-				skriva i C eller C++. Förhoppningsvis kommer även detta
+				skriva i {sLangForm}. Förhoppningsvis kommer även detta
 				förbättras en vacker dag.
 			</p>
 		{:else}
@@ -160,7 +183,7 @@
 			</p>
 			<p>
 				At the moment it's only possible to submit solutions written in
-				C or C++. Hopefully this will also be improved some time.
+				{sLangForm}. Hopefully this will also be improved some time.
 			</p>
 		{/if}
 	</article>
