@@ -10,9 +10,14 @@
 		min-height: 100vh;
 	}
 
+	@media only screen and (max-width: 600px) {
+		div {
+			margin-bottom: 80px;
+		}
+	}
 	@media only screen and (min-width: 601px) {
 		div {
-			margin-left: 5rem;
+			margin-left: 80px;
 		}
 	}
 </style>

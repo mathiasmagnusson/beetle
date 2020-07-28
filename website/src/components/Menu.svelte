@@ -139,7 +139,7 @@
 		</li>
 		<li class="logo-mobile">
 			<a href="/" class:active={segment === undefined}>
-				<i style="color: #000000" class="fas fa-otter"></i>
+				<i style="color: #50b050" class="fas fa-bug"></i>
 			</a>
 		</li>
 		<li class="item">
