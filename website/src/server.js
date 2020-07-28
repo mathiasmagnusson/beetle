@@ -2,9 +2,8 @@ import * as sapper from "@sapper/server";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import creds from "./creds.json";
-import database from "./database.js";
 import express from "express";
-import cryptoken, { decrypt } from "./cryptoken.js";
+import cryptoken from "./cryptoken.js";
 
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === "development";
@@ -22,7 +21,11 @@ app.use(
 		maxAge: 60 * 60 * 1000,
 		randSize: 16,
 	}),
-	sapper.middleware(),
+	sapper.middleware({
+		session: (req, res) => ({
+			lang: req.headers["accept-language"]
+		})
+	}),
 );
 
 app.listen(PORT, err => err && console.log("error", err) );
