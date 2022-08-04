@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 
-use crate::{sandbox, Sandbox};
+use crate::{sandbox, Sandbox, settings::Settings};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -45,11 +45,11 @@ pub struct Submission {
 }
 
 impl Submission {
-    pub fn judge<T: Write>(&self, writable: &mut T) {
+    pub fn judge<T: Write>(&self, settings: &Settings, writable: &mut T) {
         eprintln!("Judging submission {}", self.id);
 
         // create sandbox
-        let sandbox = match Sandbox::new(&self.lang, &self.source) {
+        let sandbox = match Sandbox::new(settings, &self.lang, &self.source) {
             Ok(s) => s,
             Err(sandbox::Error::CompilationError(_code, _output)) => {
                 write!(
@@ -91,7 +91,7 @@ impl Submission {
         match &self.test_cases {
             TestCases::CompareOutput(cases) => {
                 for (i, (input, output)) in cases.iter().enumerate() {
-                    match sandbox.run_test_case(input, output, self.time_limit) {
+                    match sandbox.run_test_case(settings, input, output, self.time_limit) {
                         Ok((Status::Accepted, time)) if i == cases.len() - 1 => {
                             max_time = time.unwrap_or(max_time).max(max_time);
                             write!(

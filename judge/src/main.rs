@@ -2,9 +2,6 @@ use serde_json::json;
 use std::error::Error;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::RwLock;
-
-use lazy_static::lazy_static;
 
 #[cfg(test)]
 mod tests;
@@ -19,11 +16,7 @@ use settings::Settings;
 use submission::Submission;
 use worker_pool::WorkerPool;
 
-lazy_static! {
-    static ref SETTINGS: RwLock<Settings> = RwLock::new(Settings::new().unwrap());
-}
-
-fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
+fn handle_connection(settings: &'static Settings, mut socket: TcpStream, pool: &WorkerPool) {
     let reader = BufReader::new(socket.try_clone().unwrap());
 
     for line in reader.lines().filter_map(|line| line.ok()) {
@@ -43,7 +36,7 @@ fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
         };
 
         let mut socket = socket.try_clone().unwrap();
-        if let Err(err) = pool.submit(move || submission.judge(&mut socket)) {
+        if let Err(err) = pool.submit(move || submission.judge(settings, &mut socket)) {
             eprintln!("Pool submission error: {:?}", err);
         };
     }
@@ -52,14 +45,14 @@ fn handle_connection(mut socket: TcpStream, pool: &WorkerPool) {
 const BOOMER: () = ();
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let st = Box::leak(Box::new(Settings::new()?));
+
     let pool = WorkerPool::new((num_cpus::get() - 1).max(1));
 
     let listener = TcpListener::bind("0.0.0.0:48753")?;
 
-    let _ = SETTINGS.read();
-
     while let Ok((socket, _addr)) = listener.accept() {
-        handle_connection(socket, &pool);
+        handle_connection(st, socket, &pool);
     }
 
     Ok(BOOMER)

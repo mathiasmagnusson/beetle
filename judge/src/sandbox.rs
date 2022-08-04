@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::{env, fs, io, thread, time};
 
+use crate::settings::Settings;
 use crate::submission::Status;
-use crate::SETTINGS;
 
 #[derive(Debug)]
 pub enum Error {
@@ -12,16 +12,13 @@ pub enum Error {
     JudgeError,
 }
 
-#[derive(Debug)]
 pub struct Sandbox {
     dir: PathBuf,
-    lang: String,
 }
 
 impl Sandbox {
-    pub fn new(lang: &str, source: &str) -> Result<Self, Error> {
-        let sr = SETTINGS.read().map_err(|_| Error::JudgeError)?;
-        let lang_ref = match sr.languages.get(lang) {
+    pub fn new(settings: &Settings, lang: &str, source: &str) -> Result<Self, Error> {
+        let lang_ref = match settings.languages.get(lang) {
             Some(lang) => lang,
             None => {
                 return Err(Error::JudgeError);
@@ -98,20 +95,18 @@ impl Sandbox {
 
         Ok(Sandbox {
             dir,
-            lang: lang.to_string(),
         })
     }
     pub fn run_test_case(
         &self,
+        settings: &Settings,
         input: &str,
         correct_output: &str,
         time_limit: u128,
     ) -> Result<(Status, Option<u128>), Error> {
-        let sr = SETTINGS.read().map_err(|_| Error::JudgeError)?;
-
         let mut child = Command::new("./executor")
             .arg(self.dir.as_os_str())
-            .arg(format!("{}", sr.judge_inst_uid))
+            .arg(format!("{}", settings.judge_inst_uid))
             .arg("program")
             .stdout(Stdio::piped())
             .stdin(Stdio::piped())

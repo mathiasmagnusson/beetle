@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 use config::{Config, File};
 use serde::{Deserialize, Serialize};
@@ -10,7 +9,7 @@ pub struct Language {
     pub file_suffix: String,
     pub compiler_command: String,
     pub compiler_args: Vec<String>,
-	pub dependencies: Vec<String>,
+    pub dependencies: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -21,10 +20,10 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Result<Self, impl Error> {
-        let mut c = Config::new();
+        let c = Config::builder()
+            .add_source(File::with_name("lang.yaml"))
+            .build()?;
 
-        c.merge(File::with_name("lang.yaml"))?;
-
-        c.try_into().map_err(|err| Box::new(err))
+        c.try_deserialize::<Self>()
     }
 }
